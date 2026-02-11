@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
-import { ReviewResult } from '@/lib/api';
-
-const sentimentConfig = {
-  positive: { label: '긍정', className: 'bg-positive/15 text-positive' },
-  negative: { label: '부정', className: 'bg-negative/15 text-negative' },
-  neutral: { label: '중립', className: 'bg-neutral/15 text-neutral' },
-};
+import { ReviewResult, Store } from '@/lib/api';
+import { getStoreColors } from '@/lib/storeColors';
 
 const StarRating = ({ rating }: { rating: number }) => (
   <div className="flex gap-0.5">
@@ -16,10 +11,17 @@ const StarRating = ({ rating }: { rating: number }) => (
   </div>
 );
 
-const ReviewCard = ({ review }: { review: ReviewResult }) => {
+const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?: Store }) => {
   const [expanded, setExpanded] = useState(false);
   const isLong = review.content.length > 80;
-  const sentiment = review.sentiment ? sentimentConfig[review.sentiment] : null;
+  const colors = getStoreColors(store);
+
+  const getSentimentStyle = (sentiment: 'positive' | 'negative' | 'neutral') => {
+    const c = sentiment === 'positive' ? colors.positive : sentiment === 'negative' ? colors.negative : colors.neutral;
+    return { backgroundColor: `${c}26`, color: c };
+  };
+
+  const sentimentLabels = { positive: '긍정', negative: '부정', neutral: '중립' };
 
   return (
     <div className="glass-card p-5 animate-fade-in hover:border-primary/20 transition-all duration-300">
@@ -27,9 +29,12 @@ const ReviewCard = ({ review }: { review: ReviewResult }) => {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span className="font-display font-semibold text-foreground">{review.author}</span>
-            {sentiment && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sentiment.className}`}>
-                {sentiment.label}
+            {review.sentiment && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={getSentimentStyle(review.sentiment)}
+              >
+                {sentimentLabels[review.sentiment]}
               </span>
             )}
           </div>

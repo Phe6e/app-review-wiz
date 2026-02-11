@@ -1,17 +1,29 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Store } from '@/lib/api';
+import { getStoreColors } from '@/lib/storeColors';
 
 interface SentimentChartProps {
   data?: { name: string; value: number; color: string }[];
+  store?: Store;
 }
 
-const defaultData = [
-  { name: '긍정', value: 52, color: '#007AFF' },
-  { name: '부정', value: 32, color: '#FF3B30' },
-  { name: '중립', value: 16, color: '#8E8E93' },
-];
+const SentimentChart = ({ data, store = 'apple' }: SentimentChartProps) => {
+  const colors = getStoreColors(store);
 
-const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const chartData = data || [
+    { name: '긍정', value: 52, color: colors.positive },
+    { name: '부정', value: 32, color: colors.negative },
+    { name: '중립', value: 16, color: colors.neutral },
+  ];
+
+  // Override colors from store palette
+  const coloredData = chartData.map(d => {
+    if (d.name === '긍정') return { ...d, color: colors.positive };
+    if (d.name === '부정') return { ...d, color: colors.negative };
+    return { ...d, color: colors.neutral };
+  });
+
+  const total = coloredData.reduce((sum, d) => sum + d.value, 0);
 
   if (total === 0) {
     return (
@@ -33,20 +45,20 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
             <PieChart>
               <defs>
                 <linearGradient id="sentGradPos" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#007AFF" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#5AC8FA" stopOpacity={0.75} />
+                  <stop offset="0%" stopColor={colors.gradPos[0]} stopOpacity={0.95} />
+                  <stop offset="100%" stopColor={colors.gradPos[1]} stopOpacity={0.75} />
                 </linearGradient>
                 <linearGradient id="sentGradNeg" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#FF3B30" stopOpacity={0.95} />
-                  <stop offset="100%" stopColor="#FF6B6B" stopOpacity={0.75} />
+                  <stop offset="0%" stopColor={colors.gradNeg[0]} stopOpacity={0.95} />
+                  <stop offset="100%" stopColor={colors.gradNeg[1]} stopOpacity={0.75} />
                 </linearGradient>
                 <linearGradient id="sentGradNeu" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#8E8E93" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#AEAEB2" stopOpacity={0.7} />
+                  <stop offset="0%" stopColor={colors.gradNeu[0]} stopOpacity={0.9} />
+                  <stop offset="100%" stopColor={colors.gradNeu[1]} stopOpacity={0.7} />
                 </linearGradient>
               </defs>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
-                {data.map((entry, index) => {
+              <Pie data={coloredData} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
+                {coloredData.map((entry, index) => {
                   const gradId = entry.name === '긍정' ? 'url(#sentGradPos)' : entry.name === '부정' ? 'url(#sentGradNeg)' : 'url(#sentGradNeu)';
                   return <Cell key={index} fill={gradId} />;
                 })}
@@ -65,7 +77,7 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
           </ResponsiveContainer>
         </div>
         <div className="flex flex-col gap-3">
-          {data.map(d => (
+          {coloredData.map(d => (
             <div key={d.name} className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
               <span className="text-sm text-muted-foreground w-8">{d.name}</span>

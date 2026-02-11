@@ -1,19 +1,29 @@
 import { Sentiment } from '@/data/mockData';
+import { Store } from '@/lib/api';
+import { getStoreColors } from '@/lib/storeColors';
 
 interface ReviewFiltersProps {
   selectedRating: number | null;
   selectedSentiment: Sentiment | null;
   onRatingChange: (r: number | null) => void;
   onSentimentChange: (s: Sentiment | null) => void;
+  store?: Store;
 }
 
-const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSentimentChange }: ReviewFiltersProps) => {
+const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSentimentChange, store = 'apple' }: ReviewFiltersProps) => {
+  const colors = getStoreColors(store);
   const ratings = [5, 4, 3, 2, 1];
-  const sentiments: { value: Sentiment; label: string; className: string }[] = [
-    { value: 'positive', label: '긍정', className: 'bg-positive/15 text-positive border-positive/30' },
-    { value: 'negative', label: '부정', className: 'bg-negative/15 text-negative border-negative/30' },
-    { value: 'neutral', label: '중립', className: 'bg-neutral/15 text-neutral border-neutral/30' },
+  const sentiments: { value: Sentiment; label: string }[] = [
+    { value: 'positive', label: '긍정' },
+    { value: 'negative', label: '부정' },
+    { value: 'neutral', label: '중립' },
   ];
+
+  const getColor = (s: Sentiment) => {
+    if (s === 'positive') return colors.positive;
+    if (s === 'negative') return colors.negative;
+    return colors.neutral;
+  };
 
   return (
     <div className="flex flex-wrap gap-4 items-center">
@@ -41,17 +51,25 @@ const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSe
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground font-medium">감성:</span>
         <div className="flex gap-1.5">
-          {sentiments.map(s => (
-            <button
-              key={s.value}
-              onClick={() => onSentimentChange(selectedSentiment === s.value ? null : s.value)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                selectedSentiment === s.value ? s.className : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
+          {sentiments.map(s => {
+            const c = getColor(s.value);
+            const isActive = selectedSentiment === s.value;
+            return (
+              <button
+                key={s.value}
+                onClick={() => onSentimentChange(isActive ? null : s.value)}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium border transition-all"
+                style={isActive ? {
+                  backgroundColor: `${c}26`,
+                  color: c,
+                  borderColor: `${c}4D`,
+                } : {}}
+                {...(!isActive && { className: 'px-3 py-1.5 rounded-lg text-sm font-medium border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all' })}
+              >
+                {s.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
