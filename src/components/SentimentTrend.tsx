@@ -14,7 +14,6 @@ const MONTH_LABELS = ['1월','2월','3월','4월','5월','6월','7월','8월','9
 
 const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
   const trendData = useMemo(() => {
-    // Build monthly buckets
     const buckets = MONTH_LABELS.map(label => ({ date: label, positive: 0, negative: 0, neutral: 0 }));
 
     if (reviews.length === 0) return buckets;
@@ -23,13 +22,12 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
       if (!r.date || !r.sentiment) continue;
       const d = new Date(r.date);
       if (isNaN(d.getTime())) continue;
-      const month = d.getMonth(); // 0-11
+      const month = d.getMonth();
       if (r.sentiment === 'positive') buckets[month].positive++;
       else if (r.sentiment === 'negative') buckets[month].negative++;
       else buckets[month].neutral++;
     }
 
-    // Only return months that have data (trim trailing empty months)
     let lastNonEmpty = -1;
     for (let i = buckets.length - 1; i >= 0; i--) {
       if (buckets[i].positive + buckets[i].negative + buckets[i].neutral > 0) { lastNonEmpty = i; break; }
@@ -39,9 +37,9 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
   }, [reviews]);
 
   return (
-    <div className="glass-card p-6">
+    <div className="glass-card p-6 flex flex-col h-full">
       <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">감성 트렌드</h3>
-      <div className="h-56">
+      <div className="flex-1 flex items-center justify-center min-h-[14rem]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={trendData}>
             <defs>
