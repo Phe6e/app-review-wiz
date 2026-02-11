@@ -9,10 +9,10 @@ interface ReviewFiltersProps {
 
 const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSentimentChange }: ReviewFiltersProps) => {
   const ratings = [5, 4, 3, 2, 1];
-  const sentiments: { value: Sentiment; label: string; className: string }[] = [
-    { value: 'positive', label: '긍정', className: 'bg-positive/15 text-positive border-positive/30' },
-    { value: 'negative', label: '부정', className: 'bg-negative/15 text-negative border-negative/30' },
-    { value: 'neutral', label: '중립', className: 'bg-neutral/15 text-neutral border-neutral/30' },
+  const sentiments: { value: Sentiment; label: string; activeClass: string }[] = [
+    { value: 'positive', label: '긍정', activeClass: 'bg-positive/10 text-positive ring-1 ring-positive/30' },
+    { value: 'negative', label: '부정', activeClass: 'bg-negative/10 text-negative ring-1 ring-negative/30' },
+    { value: 'neutral', label: '중립', activeClass: 'bg-neutral/10 text-neutral ring-1 ring-neutral/30' },
   ];
 
   return (
@@ -26,8 +26,8 @@ const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSe
               onClick={() => onRatingChange(selectedRating === r ? null : r)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 selectedRating === r
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
               {r}★
@@ -45,8 +45,8 @@ const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSe
             <button
               key={s.value}
               onClick={() => onSentimentChange(selectedSentiment === s.value ? null : s.value)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                selectedSentiment === s.value ? s.className : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                selectedSentiment === s.value ? s.activeClass : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
               {s.label}
