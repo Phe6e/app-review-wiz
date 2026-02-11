@@ -13,6 +13,17 @@ const defaultData = [
 const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
+  if (total === 0) {
+    return (
+      <div className="glass-card p-6 flex flex-col h-full">
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 분석</h3>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">선택한 기간에 데이터가 없습니다</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card p-6 flex flex-col h-full">
       <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 분석</h3>

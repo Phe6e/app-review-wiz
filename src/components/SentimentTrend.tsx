@@ -10,31 +10,46 @@ interface SentimentTrendProps {
   reviews?: ReviewForTrend[];
 }
 
-const MONTH_LABELS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-
 const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
   const trendData = useMemo(() => {
-    const buckets = MONTH_LABELS.map(label => ({ date: label, positive: 0, negative: 0, neutral: 0 }));
+    if (reviews.length === 0) return [];
 
-    if (reviews.length === 0) return buckets;
+    // Group by date (YYYY-MM-DD)
+    const bucketMap = new Map<string, { positive: number; negative: number; neutral: number }>();
 
     for (const r of reviews) {
       if (!r.date || !r.sentiment) continue;
       const d = new Date(r.date);
       if (isNaN(d.getTime())) continue;
-      const month = d.getMonth();
-      if (r.sentiment === 'positive') buckets[month].positive++;
-      else if (r.sentiment === 'negative') buckets[month].negative++;
-      else buckets[month].neutral++;
+      const key = d.toISOString().slice(0, 10);
+      const entry = bucketMap.get(key) || { positive: 0, negative: 0, neutral: 0 };
+      entry[r.sentiment]++;
+      bucketMap.set(key, entry);
     }
 
-    let lastNonEmpty = -1;
-    for (let i = buckets.length - 1; i >= 0; i--) {
-      if (buckets[i].positive + buckets[i].negative + buckets[i].neutral > 0) { lastNonEmpty = i; break; }
-    }
-    if (lastNonEmpty === -1) return buckets;
-    return buckets.slice(0, lastNonEmpty + 1);
+    if (bucketMap.size === 0) return [];
+
+    // Sort by date
+    const sorted = Array.from(bucketMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, counts]) => ({
+        date: date.slice(5), // MM-DD
+        ...counts,
+      }));
+
+    return sorted;
   }, [reviews]);
+
+  if (trendData.length === 0) {
+    return (
+      <div className="glass-card p-6 flex flex-col h-full">
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 트렌드</h3>
+        <div className="flex-1 flex items-center justify-center min-h-[14rem]">
+          <p className="text-sm text-muted-foreground">선택한 기간에 데이터가 없습니다</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
@@ -52,8 +67,8 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
                 <stop offset="100%" stopColor="hsl(0, 50%, 55%)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" stroke="hsl(220, 10%, 65%)" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(220, 10%, 65%)" fontSize={12} tickLine={false} axisLine={false} />
+            <XAxis dataKey="date" stroke="hsl(220, 10%, 65%)" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="hsl(220, 10%, 65%)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
             <Tooltip
               contentStyle={{
                 background: 'rgba(255,255,255,0.9)',

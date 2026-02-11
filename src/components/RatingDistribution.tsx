@@ -12,6 +12,18 @@ const defaultData = [
 
 const RatingDistribution = ({ data = defaultData }: RatingDistributionProps) => {
   const max = Math.max(...data.map(d => d.count), 1);
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+
+  if (total === 0) {
+    return (
+      <div className="glass-card p-6 flex flex-col h-full">
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">평점 분포</h3>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">선택한 기간에 데이터가 없습니다</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
