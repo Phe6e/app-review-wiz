@@ -111,15 +111,13 @@ const Index = () => {
         setCurrentPage(nextPage);
         setHasNextPage(result.hasNextPage || false);
 
-        // Merge reviews and update distribution without waiting for analysis
-        setReviews(prev => {
-          const allReviews = [...prev, ...newReviews];
-          const dist = [5, 4, 3, 2, 1].map(r => ({
-            rating: r,
-            count: allReviews.filter((rev: ReviewResult) => rev.rating === r).length,
-          }));
-          setRatingDist(dist);
-          return allReviews;
+        // Merge reviews first
+        const mergedReviewsPromise = new Promise<ReviewResult[]>((resolve) => {
+          setReviews(prev => {
+            const allReviews = [...prev, ...newReviews];
+            resolve(allReviews);
+            return allReviews;
+          });
         });
 
         // Restore scroll position immediately after state update
@@ -127,11 +125,11 @@ const Index = () => {
           window.scrollTo(0, scrollY);
         });
 
-        // Run analysis in background without replacing the reviews array entirely
+        // Run analysis on ALL merged reviews
+        const allReviews = await mergedReviewsPromise;
         setAnalyzing(true);
         try {
-          const allForAnalysis = [...reviews, ...newReviews];
-          const analysis = await analyzeReviews(allForAnalysis);
+          const analysis = await analyzeReviews(allReviews);
           if (analysis.success) {
             // Merge sentiment data into existing reviews instead of replacing
             setReviews(prev => {
@@ -166,7 +164,7 @@ const Index = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [selectedApp, store, currentPage, hasNextPage, loadingMore, reviews]);
+  }, [selectedApp, store, currentPage, hasNextPage, loadingMore]);
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
@@ -185,6 +183,29 @@ const Index = () => {
     const pos = reviews.filter(r => r.sentiment === 'positive').length;
     return reviews.length > 0 ? Math.round((pos / reviews.length) * 100) : 0;
   }, [reviews]);
+
+  // Recalculate rating distribution whenever reviews change
+  const computedRatingDist = useMemo(() => {
+    if (reviews.length === 0) return ratingDist;
+    return [5, 4, 3, 2, 1].map(r => ({
+      rating: r,
+      count: reviews.filter((rev: ReviewResult) => rev.rating === r).length,
+    }));
+  }, [reviews, ratingDist]);
+
+  // Recalculate sentiment distribution from reviews when available
+  const computedSentimentDist = useMemo(() => {
+    const analyzed = reviews.filter(r => r.sentiment);
+    if (analyzed.length === 0) return sentimentDist;
+    const pos = analyzed.filter(r => r.sentiment === 'positive').length;
+    const neg = analyzed.filter(r => r.sentiment === 'negative').length;
+    const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
+    return [
+      { name: '긍정', value: pos, color: 'hsl(152, 60%, 48%)' },
+      { name: '부정', value: neg, color: 'hsl(0, 72%, 55%)' },
+      { name: '중립', value: neu, color: 'hsl(38, 92%, 55%)' },
+    ];
+  }, [reviews, sentimentDist]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,8 +260,8 @@ const Index = () => {
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SentimentChart data={sentimentDist} />
-          <RatingDistribution data={ratingDist} />
+          <SentimentChart data={computedSentimentDist} />
+          <RatingDistribution data={computedRatingDist} />
           <SentimentTrend />
           <KeywordCloud keywords={keywords} />
         </section>
