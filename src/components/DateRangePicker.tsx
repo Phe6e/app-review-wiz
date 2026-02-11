@@ -33,7 +33,7 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }: Dat
           <Button
             variant="outline"
             className={cn(
-              'h-9 px-3 text-sm justify-start font-normal bg-card border-border rounded-xl',
+              'h-9 px-3 text-sm justify-start font-normal bg-secondary border-border',
               !startDate && 'text-muted-foreground'
             )}
           >
@@ -60,7 +60,7 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }: Dat
           <Button
             variant="outline"
             className={cn(
-              'h-9 px-3 text-sm justify-start font-normal bg-card border-border rounded-xl',
+              'h-9 px-3 text-sm justify-start font-normal bg-secondary border-border',
               !endDate && 'text-muted-foreground'
             )}
           >
@@ -83,7 +83,7 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }: Dat
       {hasFilter && (
         <button
           onClick={handleClear}
-          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
           title="날짜 필터 초기화"
         >
           <X className="w-4 h-4" />

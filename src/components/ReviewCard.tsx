@@ -3,9 +3,9 @@ import { ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { ReviewResult } from '@/lib/api';
 
 const sentimentConfig = {
-  positive: { label: '긍정', className: 'bg-positive/10 text-positive' },
-  negative: { label: '부정', className: 'bg-negative/10 text-negative' },
-  neutral: { label: '중립', className: 'bg-neutral/10 text-neutral' },
+  positive: { label: '긍정', className: 'bg-positive/15 text-positive' },
+  negative: { label: '부정', className: 'bg-negative/15 text-negative' },
+  neutral: { label: '중립', className: 'bg-neutral/15 text-neutral' },
 };
 
 const StarRating = ({ rating }: { rating: number }) => (
@@ -22,11 +22,11 @@ const ReviewCard = ({ review }: { review: ReviewResult }) => {
   const sentiment = review.sentiment ? sentimentConfig[review.sentiment] : null;
 
   return (
-    <div className="glass-card p-5 animate-fade-in">
+    <div className="glass-card p-5 animate-fade-in hover:border-primary/20 transition-all duration-300">
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-semibold text-foreground">{review.author}</span>
+            <span className="font-display font-semibold text-foreground">{review.author}</span>
             {sentiment && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sentiment.className}`}>
                 {sentiment.label}
@@ -46,7 +46,7 @@ const ReviewCard = ({ review }: { review: ReviewResult }) => {
         )}
       </div>
 
-      {review.title && <h4 className="font-medium text-foreground mb-1">{review.title}</h4>}
+      {review.title && <h4 className="font-display font-medium text-foreground mb-1">{review.title}</h4>}
       <p className="text-sm text-muted-foreground leading-relaxed">
         {isLong && !expanded ? review.content.slice(0, 80) + '...' : review.content}
       </p>
