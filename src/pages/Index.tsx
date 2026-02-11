@@ -60,9 +60,9 @@ const Index = () => {
         if (analysis.sentimentDistribution) {
           const sd = analysis.sentimentDistribution;
           setSentimentDist([
-            { name: '긍정', value: sd.positive || 0, color: 'hsl(152, 60%, 48%)' },
-            { name: '부정', value: sd.negative || 0, color: 'hsl(0, 72%, 55%)' },
-            { name: '중립', value: sd.neutral || 0, color: 'hsl(38, 92%, 55%)' },
+            { name: '긍정', value: sd.positive || 0, color: 'hsl(142, 71%, 45%)' },
+            { name: '부정', value: sd.negative || 0, color: 'hsl(4, 90%, 60%)' },
+            { name: '중립', value: sd.neutral || 0, color: 'hsl(240, 4%, 56%)' },
           ]);
         }
       }
@@ -163,9 +163,9 @@ const Index = () => {
             if (analysis.sentimentDistribution) {
               const sd = analysis.sentimentDistribution;
               setSentimentDist([
-                { name: '긍정', value: sd.positive || 0, color: 'hsl(152, 60%, 48%)' },
-                { name: '부정', value: sd.negative || 0, color: 'hsl(0, 72%, 55%)' },
-                { name: '중립', value: sd.neutral || 0, color: 'hsl(38, 92%, 55%)' },
+                { name: '긍정', value: sd.positive || 0, color: 'hsl(142, 71%, 45%)' },
+                { name: '부정', value: sd.negative || 0, color: 'hsl(4, 90%, 60%)' },
+                { name: '중립', value: sd.neutral || 0, color: 'hsl(240, 4%, 56%)' },
               ]);
             }
           }
@@ -238,9 +238,9 @@ const Index = () => {
     const neg = analyzed.filter(r => r.sentiment === 'negative').length;
     const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
     return [
-      { name: '긍정', value: pos, color: 'hsl(152, 60%, 48%)' },
-      { name: '부정', value: neg, color: 'hsl(0, 72%, 55%)' },
-      { name: '중립', value: neu, color: 'hsl(38, 92%, 55%)' },
+      { name: '긍정', value: pos, color: 'hsl(142, 71%, 45%)' },
+      { name: '부정', value: neg, color: 'hsl(4, 90%, 60%)' },
+      { name: '중립', value: neu, color: 'hsl(240, 4%, 56%)' },
     ];
   }, [dateFilteredReviews, sentimentDist]);
 
