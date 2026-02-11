@@ -1,7 +1,43 @@
+import { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { trendData } from '@/data/mockData';
 
-const SentimentTrend = () => {
+interface ReviewForTrend {
+  date: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+}
+
+interface SentimentTrendProps {
+  reviews?: ReviewForTrend[];
+}
+
+const MONTH_LABELS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
+  const trendData = useMemo(() => {
+    // Build monthly buckets
+    const buckets = MONTH_LABELS.map(label => ({ date: label, positive: 0, negative: 0, neutral: 0 }));
+
+    if (reviews.length === 0) return buckets;
+
+    for (const r of reviews) {
+      if (!r.date || !r.sentiment) continue;
+      const d = new Date(r.date);
+      if (isNaN(d.getTime())) continue;
+      const month = d.getMonth(); // 0-11
+      if (r.sentiment === 'positive') buckets[month].positive++;
+      else if (r.sentiment === 'negative') buckets[month].negative++;
+      else buckets[month].neutral++;
+    }
+
+    // Only return months that have data (trim trailing empty months)
+    let lastNonEmpty = -1;
+    for (let i = buckets.length - 1; i >= 0; i--) {
+      if (buckets[i].positive + buckets[i].negative + buckets[i].neutral > 0) { lastNonEmpty = i; break; }
+    }
+    if (lastNonEmpty === -1) return buckets;
+    return buckets.slice(0, lastNonEmpty + 1);
+  }, [reviews]);
+
   return (
     <div className="glass-card p-6">
       <h3 className="font-display font-semibold text-lg text-foreground mb-4">감성 트렌드</h3>

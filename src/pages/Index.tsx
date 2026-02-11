@@ -295,7 +295,7 @@ const Index = () => {
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SentimentChart data={computedSentimentDist} />
           <RatingDistribution data={computedRatingDist} />
-          <SentimentTrend />
+          <SentimentTrend reviews={reviews} />
           <KeywordCloud keywords={keywords} />
         </section>
 

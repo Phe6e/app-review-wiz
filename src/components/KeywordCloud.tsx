@@ -1,24 +1,40 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 
-interface KeywordCloudProps {
-  keywords?: { text: string; weight: number }[];
+interface KeywordItem {
+  text: string;
+  weight: number;
+  sentiment?: 'positive' | 'negative' | 'neutral';
 }
 
-const defaultKeywords = [
-  { text: '디자인', weight: 85 }, { text: 'UI', weight: 72 }, { text: '업데이트', weight: 90 },
-  { text: '배터리', weight: 65 }, { text: '기능', weight: 95 }, { text: '속도', weight: 60 },
-  { text: '편리함', weight: 82 }, { text: '콘텐츠', weight: 67 }, { text: '추천', weight: 75 },
+interface KeywordCloudProps {
+  keywords?: KeywordItem[];
+}
+
+const defaultKeywords: KeywordItem[] = [
+  { text: '디자인', weight: 85, sentiment: 'positive' },
+  { text: 'UI', weight: 72, sentiment: 'positive' },
+  { text: '업데이트', weight: 90, sentiment: 'positive' },
+  { text: '배터리', weight: 65, sentiment: 'negative' },
+  { text: '기능', weight: 95, sentiment: 'positive' },
+  { text: '속도', weight: 60, sentiment: 'negative' },
+  { text: '편리함', weight: 82, sentiment: 'positive' },
+  { text: '콘텐츠', weight: 67, sentiment: 'neutral' },
+  { text: '추천', weight: 75, sentiment: 'positive' },
+  { text: '크래시', weight: 55, sentiment: 'negative' },
+  { text: '광고', weight: 78, sentiment: 'negative' },
+  { text: '보안', weight: 45, sentiment: 'negative' },
 ];
 
-const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(210, 70%, 60%)',
-  'hsl(280, 60%, 65%)',
-  'hsl(152, 60%, 48%)',
-  'hsl(38, 80%, 55%)',
-  'hsl(340, 65%, 55%)',
-  'hsl(200, 75%, 55%)',
-  'hsl(120, 50%, 55%)',
+const POSITIVE_COLORS = [
+  'hsl(172, 66%, 50%)', 'hsl(199, 70%, 55%)', 'hsl(152, 60%, 48%)',
+  'hsl(142, 55%, 52%)', 'hsl(185, 62%, 48%)', 'hsl(210, 65%, 58%)',
+];
+const NEGATIVE_COLORS = [
+  'hsl(0, 72%, 55%)', 'hsl(15, 75%, 52%)', 'hsl(340, 65%, 55%)',
+  'hsl(355, 70%, 50%)', 'hsl(25, 80%, 50%)', 'hsl(330, 60%, 52%)',
+];
+const NEUTRAL_COLORS = [
+  'hsl(38, 80%, 55%)', 'hsl(45, 70%, 50%)', 'hsl(50, 65%, 55%)',
 ];
 
 const hashStr = (s: string) => {
@@ -42,26 +58,33 @@ interface Rect {
   x: number; y: number; w: number; h: number;
 }
 
-function rectsOverlap(a: Rect, b: Rect, padding = 4): boolean {
+function rectsOverlap(a: Rect, b: Rect, padding = 6): boolean {
   return !(a.x + a.w + padding < b.x || b.x + b.w + padding < a.x ||
            a.y + a.h + padding < b.y || b.y + b.h + padding < a.y);
 }
 
 function getWordRect(x: number, y: number, fontSize: number, textLen: number, rotated: boolean): Rect {
-  const charW = fontSize * 0.65;
+  const charW = fontSize * 0.6;
   const w = rotated ? fontSize * 1.2 : charW * textLen;
   const h = rotated ? charW * textLen : fontSize * 1.3;
   return { x: x - w / 2, y: y - h / 2, w, h };
 }
 
+function pickColor(kw: KeywordItem): string {
+  const h = hashStr(kw.text);
+  if (kw.sentiment === 'negative') return NEGATIVE_COLORS[h % NEGATIVE_COLORS.length];
+  if (kw.sentiment === 'neutral') return NEUTRAL_COLORS[h % NEUTRAL_COLORS.length];
+  return POSITIVE_COLORS[h % POSITIVE_COLORS.length];
+}
+
 function layoutWords(
-  keywords: { text: string; weight: number }[],
+  keywords: KeywordItem[],
   containerW: number,
   containerH: number,
 ): PlacedWord[] {
   if (containerW < 50 || containerH < 50) return [];
 
-  const sorted = [...keywords].sort((a, b) => b.weight - a.weight);
+  const sorted = [...keywords].sort((a, b) => b.weight - a.weight).slice(0, 50);
   const maxW = sorted[0]?.weight || 1;
   const minW = sorted[sorted.length - 1]?.weight || 0;
   const range = maxW - minW || 1;
@@ -75,84 +98,75 @@ function layoutWords(
     const kw = sorted[i];
     const ratio = (kw.weight - minW) / range;
 
-    // Top 3 get huge sizes
     let fontSize: number;
-    if (i < 3) {
-      fontSize = 28 + ratio * 28; // 28-56px (≈1.75rem - 3.5rem)
-    } else {
-      fontSize = 13 + ratio * 22; // 13-35px (≈0.8rem - 2.2rem)
-    }
+    if (i === 0) fontSize = 48 + ratio * 12;
+    else if (i < 3) fontSize = 32 + ratio * 16;
+    else fontSize = 13 + ratio * 20;
 
     const bold = i < 3;
-    const color = COLORS[hashStr(kw.text) % COLORS.length];
+    const color = pickColor(kw);
 
-    // ~35% chance of vertical rotation
     const seed = hashStr(kw.text + 'rot');
     const rotated = seed % 100 < 35;
     const rotation = rotated ? 90 : 0;
 
-    // Spiral placement
-    let placed_ = false;
-    const spiralStep = 3;
-    const maxRadius = Math.max(containerW, containerH) * 0.6;
+    let didPlace = false;
+    const spiralStep = 2;
+    const maxRadius = Math.max(containerW, containerH) * 0.55;
 
     for (let r = 0; r < maxRadius; r += spiralStep) {
-      const angleStep = r < 1 ? 1 : Math.max(4, Math.floor(360 / (r * 0.5)));
+      const angleStep = r < 1 ? 1 : Math.max(6, Math.floor(360 / (r * 0.4)));
       for (let angle = 0; angle < 360; angle += angleStep) {
         const rad = (angle * Math.PI) / 180;
-        // Elliptical spiral to fit container shape
-        const px = cx + r * Math.cos(rad) * (containerW / containerH);
+        const px = cx + r * Math.cos(rad) * (containerW / containerH) * 0.85;
         const py = cy + r * Math.sin(rad);
 
         const rect = getWordRect(px, py, fontSize, kw.text.length, rotated);
 
-        // Bounds check
-        if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > containerW || rect.y + rect.h > containerH) {
+        if (rect.x < 2 || rect.y < 2 || rect.x + rect.w > containerW - 2 || rect.y + rect.h > containerH - 2) {
           continue;
         }
 
-        // Collision check
         let collides = false;
         for (const existing of rects) {
-          if (rectsOverlap(rect, existing, 3)) {
+          if (rectsOverlap(rect, existing, 6)) {
             collides = true;
             break;
           }
         }
 
         if (!collides) {
-          placed.push({
-            text: kw.text,
-            weight: kw.weight,
-            x: px,
-            y: py,
-            fontSize,
-            rotation,
-            color,
-            bold,
-          });
+          placed.push({ text: kw.text, weight: kw.weight, x: px, y: py, fontSize, rotation, color, bold });
           rects.push(rect);
-          placed_ = true;
+          didPlace = true;
           break;
         }
       }
-      if (placed_) break;
+      if (didPlace) break;
     }
 
-    // Fallback: place at edge if spiral failed
-    if (!placed_) {
-      const fallbackX = cx + (hashStr(kw.text + 'fx') % 60 - 30);
-      const fallbackY = cy + (hashStr(kw.text + 'fy') % 60 - 30);
-      placed.push({
-        text: kw.text,
-        weight: kw.weight,
-        x: fallbackX,
-        y: fallbackY,
-        fontSize: Math.max(fontSize * 0.7, 12),
-        rotation,
-        color,
-        bold,
-      });
+    if (!didPlace) {
+      // try smaller font as last resort
+      const smallFontSize = Math.max(fontSize * 0.6, 11);
+      for (let r = 0; r < maxRadius; r += 4) {
+        const angleStep = Math.max(8, Math.floor(360 / (r * 0.3 + 1)));
+        for (let angle = 0; angle < 360; angle += angleStep) {
+          const rad = (angle * Math.PI) / 180;
+          const px = cx + r * Math.cos(rad) * (containerW / containerH) * 0.85;
+          const py = cy + r * Math.sin(rad);
+          const rect = getWordRect(px, py, smallFontSize, kw.text.length, rotated);
+          if (rect.x < 2 || rect.y < 2 || rect.x + rect.w > containerW - 2 || rect.y + rect.h > containerH - 2) continue;
+          let collides = false;
+          for (const existing of rects) { if (rectsOverlap(rect, existing, 5)) { collides = true; break; } }
+          if (!collides) {
+            placed.push({ text: kw.text, weight: kw.weight, x: px, y: py, fontSize: smallFontSize, rotation, color, bold: false });
+            rects.push(rect);
+            didPlace = true;
+            break;
+          }
+        }
+        if (didPlace) break;
+      }
     }
   }
 
@@ -184,11 +198,18 @@ const KeywordCloud = ({ keywords = defaultKeywords }: KeywordCloudProps) => {
 
   return (
     <div className="glass-card p-6">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4">주요 키워드</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display font-semibold text-lg text-foreground">주요 키워드</h3>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(172, 66%, 50%)' }} />긍정</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(0, 72%, 55%)' }} />부정</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(38, 80%, 55%)' }} />중립</span>
+        </div>
+      </div>
       <div
         ref={containerRef}
         className="relative overflow-hidden"
-        style={{ height: '280px' }}
+        style={{ height: '300px' }}
       >
         {placedWords.map((word, idx) => (
           <span
