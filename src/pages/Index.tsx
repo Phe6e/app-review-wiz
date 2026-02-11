@@ -179,9 +179,32 @@ const Index = () => {
     return Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
   }, [reviews, selectedApp]);
 
-  const positiveRate = useMemo(() => {
-    const pos = reviews.filter(r => r.sentiment === 'positive').length;
-    return reviews.length > 0 ? Math.round((pos / reviews.length) * 100) : 0;
+  // 평점 변동 추이: 전월 대비 변화량 계산
+  const ratingTrend = useMemo(() => {
+    if (reviews.length === 0) return { change: 0, direction: 'neutral' as const };
+    const now = new Date();
+    const thisMonth = reviews.filter(r => {
+      const d = new Date(r.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const lastMonth = reviews.filter(r => {
+      const d = new Date(r.date);
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getMonth() === prev.getMonth() && d.getFullYear() === prev.getFullYear();
+    });
+    const thisAvg = thisMonth.length > 0 ? thisMonth.reduce((s, r) => s + r.rating, 0) / thisMonth.length : avgRating;
+    const lastAvg = lastMonth.length > 0 ? lastMonth.reduce((s, r) => s + r.rating, 0) / lastMonth.length : thisAvg;
+    const change = lastAvg > 0 ? Math.round(((thisAvg - lastAvg) / lastAvg) * 1000) / 10 : 0;
+    return { change, direction: change > 0 ? 'up' as const : change < 0 ? 'down' as const : 'neutral' as const };
+  }, [reviews, avgRating]);
+
+  // 리뷰 밀도: 최근 7일 하루 평균 리뷰 수
+  const reviewDensity = useMemo(() => {
+    if (reviews.length === 0) return 0;
+    const now = Date.now();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const recentCount = reviews.filter(r => now - new Date(r.date).getTime() < week).length;
+    return Math.round((recentCount / 7) * 10) / 10;
   }, [reviews]);
 
   // Recalculate rating distribution whenever reviews change
@@ -255,8 +278,18 @@ const Index = () => {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={reviews.length > 0 ? reviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
           <StatCard icon={<Star className="w-5 h-5" />} label="평균 평점" value={String(avgRating)} />
-          <StatCard icon={<TrendingUp className="w-5 h-5" />} label="긍정 비율" value={`${positiveRate}%`} />
-          <StatCard icon={<BarChart3 className="w-5 h-5" />} label="분석 리뷰" value={String(reviews.filter(r => r.sentiment).length)} />
+          <StatCard
+            icon={<TrendingUp className="w-5 h-5" />}
+            label="평점 변동 추이"
+            value={`${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%`}
+            subtext={ratingTrend.direction === 'up' ? '▲ 전월 대비 상승' : ratingTrend.direction === 'down' ? '▼ 전월 대비 하락' : '— 변동 없음'}
+          />
+          <StatCard
+            icon={<BarChart3 className="w-5 h-5" />}
+            label="리뷰 밀도"
+            value={`${reviewDensity}`}
+            subtext="최근 7일 일평균"
+          />
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
