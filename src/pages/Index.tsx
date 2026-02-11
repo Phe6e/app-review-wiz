@@ -94,10 +94,11 @@ const Index = () => {
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const handleLoadMore = useCallback(async () => {
+  const handleLoadMore = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!selectedApp || loadingMore || !hasNextPage) return;
 
-    // Save scroll position before loading
     const scrollY = window.scrollY;
     const nextPage = currentPage + 1;
     setLoadingMore(true);
@@ -106,18 +107,57 @@ const Index = () => {
       const result = await fetchReviews(selectedApp.id, store, 'kr', nextPage);
 
       if (result.success && result.reviews && result.reviews.length > 0) {
-        const allReviews = [...reviews, ...result.reviews];
-        setReviews(allReviews);
+        const newReviews = result.reviews;
         setCurrentPage(nextPage);
         setHasNextPage(result.hasNextPage || false);
 
-        const dist = [5, 4, 3, 2, 1].map(r => ({
-          rating: r,
-          count: allReviews.filter((rev: ReviewResult) => rev.rating === r).length,
-        }));
-        setRatingDist(dist);
+        // Merge reviews and update distribution without waiting for analysis
+        setReviews(prev => {
+          const allReviews = [...prev, ...newReviews];
+          const dist = [5, 4, 3, 2, 1].map(r => ({
+            rating: r,
+            count: allReviews.filter((rev: ReviewResult) => rev.rating === r).length,
+          }));
+          setRatingDist(dist);
+          return allReviews;
+        });
 
-        await analyzeAndUpdate(allReviews);
+        // Restore scroll position immediately after state update
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
+
+        // Run analysis in background without replacing the reviews array entirely
+        setAnalyzing(true);
+        try {
+          const allForAnalysis = [...reviews, ...newReviews];
+          const analysis = await analyzeReviews(allForAnalysis);
+          if (analysis.success) {
+            // Merge sentiment data into existing reviews instead of replacing
+            setReviews(prev => {
+              const sentimentMap = new Map<string, ReviewResult>();
+              for (const r of analysis.reviews) {
+                sentimentMap.set(r.id, r);
+              }
+              return prev.map(r => sentimentMap.get(r.id) || r);
+            });
+            if (analysis.keywords?.length > 0) {
+              setKeywords(analysis.keywords);
+            }
+            if (analysis.sentimentDistribution) {
+              const sd = analysis.sentimentDistribution;
+              setSentimentDist([
+                { name: '긍정', value: sd.positive || 0, color: 'hsl(152, 60%, 48%)' },
+                { name: '부정', value: sd.negative || 0, color: 'hsl(0, 72%, 55%)' },
+                { name: '중립', value: sd.neutral || 0, color: 'hsl(38, 92%, 55%)' },
+              ]);
+            }
+          }
+        } catch (err) {
+          console.error('Analysis error:', err);
+        } finally {
+          setAnalyzing(false);
+        }
       } else {
         setHasNextPage(false);
       }
@@ -125,12 +165,8 @@ const Index = () => {
       console.error('Load more error:', e);
     } finally {
       setLoadingMore(false);
-      // Restore scroll position after render
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
     }
-  }, [selectedApp, store, currentPage, hasNextPage, loadingMore, reviews, analyzeAndUpdate]);
+  }, [selectedApp, store, currentPage, hasNextPage, loadingMore, reviews]);
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
@@ -242,6 +278,7 @@ const Index = () => {
           {hasNextPage && !isUsingMockData && (
             <div className="flex justify-center mt-6">
               <button
+                type="button"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium disabled:opacity-50"
