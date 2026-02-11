@@ -289,48 +289,9 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
             <DonutCard title="경쟁사 감성 분석" data={compAnalysis.sentimentDist} />
           </div>
 
-          {/* 3. Sentiment Trend Comparison (full width) */}
-          {trendData.length > 0 && (
-            <div className="glass-card p-6">
-              <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 추이 비교</h3>
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={trendData} margin={{ top: 8, right: 24, left: 0, bottom: 4 }}>
-                  <defs>
-                    <linearGradient id="myLineGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#34C759" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="#34C759" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="compLineGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#5856D6" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="#5856D6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" vertical={false} />
-                  <XAxis dataKey="month" stroke="hsl(240,4%,56%)" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(240,4%,56%)" fontSize={11} tickLine={false} axisLine={false} width={32} unit="%" />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'rgba(255,255,255,0.85)',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255,255,255,0.5)',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-                    }}
-                    formatter={(v: number, name: string) => [`${v}%`, name === 'myRate' ? '우리 앱' : '경쟁사']}
-                  />
-                  <Legend formatter={(v) => v === 'myRate' ? '우리 앱' : '경쟁사'} />
-                  <Line type="monotone" dataKey="myRate" stroke="#34C759" strokeWidth={2.5} dot={{ r: 3, fill: '#34C759' }} connectNulls />
-                  <Line type="monotone" dataKey="compRate" stroke="#5856D6" strokeWidth={2.5} dot={{ r: 3, fill: '#5856D6' }} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* 4. Keyword Bubbles */}
+          {/* 3. Keyword Bubbles (moved up) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <KeywordBubbles title="우리 앱 주요 키워드" keywords={effectiveMyAnalysis.keywords} hue="green" />
+            <KeywordBubbles title="우리 앱 주요 키워드" keywords={effectiveMyAnalysis.keywords} hue="blue" />
             <KeywordBubbles title="경쟁사 주요 키워드" keywords={compAnalysis.keywords} hue="purple" />
           </div>
 
@@ -415,15 +376,16 @@ const DonutCard = ({ title, data }: { title: string; data: { name: string; value
   );
 };
 
-const KeywordBubbles = ({ title, keywords, hue }: { title: string; keywords: { text: string; weight: number }[]; hue: 'green' | 'purple' }) => {
+const KeywordBubbles = ({ title, keywords, hue }: { title: string; keywords: { text: string; weight: number }[]; hue: 'blue' | 'purple' }) => {
   const maxW = keywords[0]?.weight || 1;
-  const bg = hue === 'green'
-    ? (ratio: number) => `rgba(52, 199, 89, ${0.1 + ratio * 0.2})`
+  const bg = hue === 'blue'
+    ? (ratio: number) => `rgba(0, 122, 255, ${0.1 + ratio * 0.2})`
     : (ratio: number) => `rgba(88, 86, 214, ${0.1 + ratio * 0.2})`;
-  const border = hue === 'green'
-    ? 'rgba(52, 199, 89, 0.3)'
+  const border = hue === 'blue'
+    ? 'rgba(0, 122, 255, 0.3)'
     : 'rgba(88, 86, 214, 0.3)';
-  const textColor = hue === 'green' ? '#2D9A4E' : '#4B49B6';
+  const textColor = hue === 'blue' ? '#007AFF' : '#4B49B6';
+  const shadowColor = hue === 'blue' ? 'rgba(0,122,255,0.08)' : 'rgba(88,86,214,0.08)';
 
   return (
     <div className="glass-card p-6">
@@ -446,7 +408,7 @@ const KeywordBubbles = ({ title, keywords, hue }: { title: string; keywords: { t
                   WebkitBackdropFilter: 'blur(20px)',
                   border: `1px solid ${border}`,
                   fontSize: `${size}rem`,
-                  boxShadow: `0 4px 16px ${hue === 'green' ? 'rgba(52,199,89,0.08)' : 'rgba(88,86,214,0.08)'}`,
+                  boxShadow: `0 4px 16px ${shadowColor}`,
                 }}
               >
                 <span className="font-semibold" style={{ color: textColor }}>{kw.text}</span>
