@@ -38,7 +38,7 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
 
   return (
     <div className="relative w-full max-w-2xl">
-      <div className={`flex items-center gap-3 px-5 py-4 rounded-xl transition-all duration-300 glass-card ${isFocused ? 'border-primary/50 glow' : ''}`}>
+      <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-300 glass-card ${isFocused ? 'ring-2 ring-primary/20' : ''}`}>
         {loading ? <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" /> : <Search className="w-5 h-5 text-muted-foreground" />}
         <input
           type="text"
@@ -47,12 +47,12 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           placeholder={`${store === 'google' ? 'Google Play' : 'App Store'}에서 앱 검색... (예: Instagram, YouTube)`}
-          className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground font-body"
+          className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
         />
       </div>
 
       {isFocused && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 rounded-xl overflow-hidden glass-card animate-fade-in max-h-80 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 rounded-2xl overflow-hidden glass-card animate-fade-in max-h-80 overflow-y-auto">
           {suggestions.map(app => (
             <button
               key={app.id}
@@ -61,7 +61,7 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
                 setQuery(app.name);
                 setIsFocused(false);
               }}
-              className="flex items-center gap-4 w-full px-5 py-3 hover:bg-secondary/60 transition-colors text-left"
+              className="flex items-center gap-4 w-full px-5 py-3 hover:bg-accent/60 transition-colors text-left"
             >
               {app.icon ? (
                 <img src={app.icon} alt={app.name} className="w-10 h-10 rounded-xl" />
@@ -69,7 +69,7 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
                 <span className="text-2xl w-10 h-10 flex items-center justify-center">📱</span>
               )}
               <div>
-                <p className="font-display font-medium text-foreground">{app.name}</p>
+                <p className="font-medium text-foreground">{app.name}</p>
                 <p className="text-sm text-muted-foreground">{app.developer} · ⭐ {app.rating}</p>
               </div>
             </button>
@@ -78,7 +78,7 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
       )}
 
       {store === 'google' && isFocused && query.length >= 2 && (
-        <div className="absolute z-40 w-full mt-2 rounded-xl glass-card p-4 text-sm text-muted-foreground">
+        <div className="absolute z-40 w-full mt-2 rounded-2xl glass-card p-4 text-sm text-muted-foreground">
           ⚠️ Google Play 검색은 아직 지원되지 않습니다. App Store를 이용해주세요.
         </div>
       )}
