@@ -38,33 +38,34 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">감성 트렌드</h3>
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 트렌드</h3>
       <div className="flex-1 flex items-center justify-center min-h-[14rem]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={trendData}>
             <defs>
               <linearGradient id="positiveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(152, 60%, 48%)" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(152, 60%, 48%)" stopOpacity={0} />
+                <stop offset="0%" stopColor="hsl(160, 45%, 45%)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="hsl(160, 45%, 45%)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="negativeGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(0, 72%, 55%)" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="hsl(0, 72%, 55%)" stopOpacity={0} />
+                <stop offset="0%" stopColor="hsl(0, 50%, 55%)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="hsl(0, 50%, 55%)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" stroke="hsl(215, 20%, 55%)" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(215, 20%, 55%)" fontSize={12} tickLine={false} axisLine={false} />
+            <XAxis dataKey="date" stroke="hsl(220, 10%, 65%)" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke="hsl(220, 10%, 65%)" fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip
               contentStyle={{
-                background: 'hsl(222, 40%, 10%)',
-                border: '1px solid hsl(222, 30%, 22%)',
-                borderRadius: '8px',
-                color: 'hsl(210, 40%, 96%)',
+                background: 'rgba(255,255,255,0.9)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '10px',
+                color: 'hsl(220, 15%, 20%)',
                 fontSize: '12px',
               }}
             />
-            <Area type="monotone" dataKey="positive" stroke="hsl(152, 60%, 48%)" fill="url(#positiveGrad)" strokeWidth={2} />
-            <Area type="monotone" dataKey="negative" stroke="hsl(0, 72%, 55%)" fill="url(#negativeGrad)" strokeWidth={2} />
+            <Area type="monotone" dataKey="positive" stroke="hsl(160, 45%, 45%)" fill="url(#positiveGrad)" strokeWidth={2} />
+            <Area type="monotone" dataKey="negative" stroke="hsl(0, 50%, 55%)" fill="url(#negativeGrad)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

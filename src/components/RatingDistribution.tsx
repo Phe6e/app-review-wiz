@@ -15,11 +15,11 @@ const RatingDistribution = ({ data = defaultData }: RatingDistributionProps) => 
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">평점 분포</h3>
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">평점 분포</h3>
       <div className="flex-1 flex flex-col justify-center gap-3">
         {data.map(d => (
           <div key={d.rating} className="flex items-center gap-3">
-            <span className="text-sm font-display font-medium text-foreground w-8">{d.rating}★</span>
+            <span className="text-sm font-medium text-foreground w-8">{d.rating}★</span>
             <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
