@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface ReviewForTrend {
   date: string;
@@ -14,7 +14,6 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
   const trendData = useMemo(() => {
     if (reviews.length === 0) return [];
 
-    // Group by date (YYYY-MM-DD)
     const bucketMap = new Map<string, { positive: number; negative: number; neutral: number }>();
 
     for (const r of reviews) {
@@ -29,15 +28,12 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
 
     if (bucketMap.size === 0) return [];
 
-    // Sort by date
-    const sorted = Array.from(bucketMap.entries())
+    return Array.from(bucketMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, counts]) => ({
-        date: date.slice(5), // MM-DD
+        date: date.slice(5),
         ...counts,
       }));
-
-    return sorted;
   }, [reviews]);
 
   if (trendData.length === 0) {
@@ -54,33 +50,36 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
   return (
     <div className="glass-card p-6 flex flex-col h-full">
       <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 트렌드</h3>
-      <div className="flex-1 flex items-center justify-center min-h-[14rem]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={trendData}>
+      <div className="flex-1 flex items-center justify-center min-h-[14rem] px-2">
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
             <defs>
               <linearGradient id="positiveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(160, 45%, 45%)" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="hsl(160, 45%, 45%)" stopOpacity={0} />
+                <stop offset="0%" stopColor="#34C759" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#34C759" stopOpacity={0.02} />
               </linearGradient>
               <linearGradient id="negativeGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(0, 50%, 55%)" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="hsl(0, 50%, 55%)" stopOpacity={0} />
+                <stop offset="0%" stopColor="#FF3B30" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#FF3B30" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" stroke="hsl(220, 10%, 65%)" fontSize={11} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(220, 10%, 65%)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 90%)" vertical={false} />
+            <XAxis dataKey="date" stroke="hsl(240, 4%, 56%)" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="hsl(240, 4%, 56%)" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} width={28} />
             <Tooltip
               contentStyle={{
-                background: 'rgba(255,255,255,0.9)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(0,0,0,0.08)',
-                borderRadius: '10px',
+                background: 'rgba(255,255,255,0.85)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '12px',
                 color: 'hsl(220, 15%, 20%)',
                 fontSize: '12px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
               }}
             />
-            <Area type="monotone" dataKey="positive" stroke="hsl(160, 45%, 45%)" fill="url(#positiveGrad)" strokeWidth={2} />
-            <Area type="monotone" dataKey="negative" stroke="hsl(0, 50%, 55%)" fill="url(#negativeGrad)" strokeWidth={2} />
+            <Area type="monotone" dataKey="positive" name="긍정" stroke="#34C759" fill="url(#positiveGrad)" strokeWidth={2.5} dot={false} />
+            <Area type="monotone" dataKey="negative" name="부정" stroke="#FF3B30" fill="url(#negativeGrad)" strokeWidth={2.5} dot={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

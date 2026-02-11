@@ -5,9 +5,9 @@ interface SentimentChartProps {
 }
 
 const defaultData = [
-  { name: '긍정', value: 52, color: 'hsl(152, 60%, 48%)' },
-  { name: '부정', value: 32, color: 'hsl(0, 72%, 55%)' },
-  { name: '중립', value: 16, color: 'hsl(38, 92%, 55%)' },
+  { name: '긍정', value: 52, color: 'hsl(142, 71%, 45%)' },
+  { name: '부정', value: 32, color: 'hsl(4, 90%, 60%)' },
+  { name: '중립', value: 16, color: 'hsl(240, 4%, 56%)' },
 ];
 
 const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {

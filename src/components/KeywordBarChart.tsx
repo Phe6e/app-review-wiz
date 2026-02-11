@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface KeywordItem {
   text: string;
@@ -10,7 +10,18 @@ interface KeywordBarChartProps {
   keywords?: KeywordItem[];
 }
 
+interface TooltipState {
+  visible: boolean;
+  text: string;
+  weight: number;
+  sentiment: string;
+  x: number;
+  y: number;
+}
+
 const KeywordBarChart = ({ keywords = [] }: KeywordBarChartProps) => {
+  const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, text: '', weight: 0, sentiment: '', x: 0, y: 0 });
+
   const rows = useMemo(() => {
     const pos = keywords
       .filter(k => k.sentiment === 'positive')
@@ -43,6 +54,21 @@ const KeywordBarChart = ({ keywords = [] }: KeywordBarChartProps) => {
     return result;
   }, [keywords]);
 
+  const showTooltip = (e: React.MouseEvent, text: string, weight: number, sentiment: string) => {
+    const rect = (e.currentTarget as HTMLElement).closest('.glass-card')?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltip({
+      visible: true,
+      text,
+      weight,
+      sentiment,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top - 40,
+    });
+  };
+
+  const hideTooltip = () => setTooltip(prev => ({ ...prev, visible: false }));
+
   if (rows.length === 0 || (rows[0].posWeight === 0 && rows[0].negWeight === 0)) {
     return (
       <div className="glass-card p-6 flex flex-col h-full">
@@ -55,56 +81,94 @@ const KeywordBarChart = ({ keywords = [] }: KeywordBarChartProps) => {
   }
 
   return (
-    <div className="glass-card p-6 flex flex-col h-full">
+    <div className="glass-card p-6 flex flex-col h-full relative">
       <h3 className="font-semibold text-base text-foreground mb-2 text-center">주요 키워드</h3>
       <div className="flex items-center justify-center gap-6 mb-4">
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(210, 55%, 55%)' }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#007AFF' }} />
           <span className="text-xs text-muted-foreground">← 긍정</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">부정 →</span>
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(0, 50%, 58%)' }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#FF3B30' }} />
         </div>
       </div>
       <div className="flex-1 flex flex-col justify-center gap-2">
         {rows.map((row, i) => (
           <div key={i} className="flex items-center gap-0 h-7">
-            {/* Positive keyword text - left edge */}
-            <span className="text-xs text-muted-foreground w-16 text-right truncate pr-2 flex-shrink-0">
+            <span className="text-xs text-muted-foreground w-16 text-right truncate pr-2 flex-shrink-0 cursor-default"
+              onMouseEnter={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
+              onMouseMove={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
+              onMouseLeave={hideTooltip}
+            >
               {row.posText}
             </span>
-            {/* Positive bar - grows right-to-left */}
             <div className="flex-1 flex justify-end">
               <div
-                className="h-5 rounded-l-md transition-all duration-500"
+                className="h-5 rounded-full transition-all duration-500 cursor-pointer"
                 style={{
                   width: `${row.posWidth}%`,
-                  background: `hsl(${210 + i * 5}, 55%, ${55 + i * 3}%)`,
-                  minWidth: row.posWidth > 0 ? '4px' : '0',
+                  background: `linear-gradient(90deg, hsl(211, 100%, ${58 + i * 3}%), hsl(211, 100%, ${50 + i * 2}%))`,
+                  minWidth: row.posWidth > 0 ? '6px' : '0',
+                  opacity: 0.85,
                 }}
+                onMouseEnter={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
+                onMouseMove={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
+                onMouseLeave={hideTooltip}
               />
             </div>
-            {/* Center divider */}
             <div className="w-px h-5 bg-border flex-shrink-0 mx-0.5" />
-            {/* Negative bar - grows left-to-right */}
             <div className="flex-1 flex justify-start">
               <div
-                className="h-5 rounded-r-md transition-all duration-500"
+                className="h-5 rounded-full transition-all duration-500 cursor-pointer"
                 style={{
                   width: `${row.negWidth}%`,
-                  background: `hsl(${i * 5}, 50%, ${58 + i * 2}%)`,
-                  minWidth: row.negWidth > 0 ? '4px' : '0',
+                  background: `linear-gradient(90deg, hsl(4, 90%, ${60 + i * 2}%), hsl(4, 90%, ${55 + i * 2}%))`,
+                  minWidth: row.negWidth > 0 ? '6px' : '0',
+                  opacity: 0.85,
                 }}
+                onMouseEnter={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
+                onMouseMove={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
+                onMouseLeave={hideTooltip}
               />
             </div>
-            {/* Negative keyword text - right edge */}
-            <span className="text-xs text-muted-foreground w-16 text-left truncate pl-2 flex-shrink-0">
+            <span className="text-xs text-muted-foreground w-16 text-left truncate pl-2 flex-shrink-0 cursor-default"
+              onMouseEnter={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
+              onMouseMove={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
+              onMouseLeave={hideTooltip}
+            >
               {row.negText}
             </span>
           </div>
         ))}
       </div>
+
+      {/* iOS-style glassmorphism tooltip */}
+      {tooltip.visible && (
+        <div
+          className="absolute z-50 pointer-events-none animate-fade-in"
+          style={{
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <div className="px-3 py-2 rounded-xl text-xs font-medium"
+            style={{
+              background: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              color: 'hsl(220, 15%, 20%)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span className="font-semibold">{tooltip.text}</span>
+            <span className="text-muted-foreground ml-2">{tooltip.sentiment} · {tooltip.weight}회</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
