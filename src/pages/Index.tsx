@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { Star, MessageSquare, Loader2, ChevronDown } from 'lucide-react';
+import { Star, MessageSquare, TrendingUp, BarChart3, Loader2, ChevronDown } from 'lucide-react';
 import StoreSelector from '@/components/StoreSelector';
 import AppSearchBar from '@/components/AppSearchBar';
 import ReviewCard from '@/components/ReviewCard';
@@ -7,11 +7,8 @@ import ReviewFilters from '@/components/ReviewFilters';
 import SentimentChart from '@/components/SentimentChart';
 import RatingDistribution from '@/components/RatingDistribution';
 import SentimentTrend from '@/components/SentimentTrend';
-import SplitKeywordCloud from '@/components/SplitKeywordCloud';
+import KeywordCloud from '@/components/KeywordCloud';
 import StatCard from '@/components/StatCard';
-import SparklineCard from '@/components/SparklineCard';
-import ReviewLengthCard from '@/components/ReviewLengthCard';
-import AnimatedNumber from '@/components/AnimatedNumber';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
 import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution, trendData } from '@/data/mockData';
 
@@ -22,7 +19,6 @@ const Index = () => {
   const [sentimentFilter, setSentimentFilter] = useState<Sentiment | null>(null);
   const [reviews, setReviews] = useState<ReviewResult[]>([]);
   const [keywords, setKeywords] = useState(mockKeywords);
-  // keywords kept for backward compat but SplitKeywordCloud derives from reviews
   const [sentimentDist, setSentimentDist] = useState(sentimentData);
   const [ratingDist, setRatingDist] = useState(ratingDistribution);
   const [loading, setLoading] = useState(false);
@@ -183,6 +179,10 @@ const Index = () => {
     return Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
   }, [reviews, selectedApp]);
 
+  const positiveRate = useMemo(() => {
+    const pos = reviews.filter(r => r.sentiment === 'positive').length;
+    return reviews.length > 0 ? Math.round((pos / reviews.length) * 100) : 0;
+  }, [reviews]);
 
   // Recalculate rating distribution whenever reviews change
   const computedRatingDist = useMemo(() => {
@@ -255,18 +255,15 @@ const Index = () => {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={reviews.length > 0 ? reviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
           <StatCard icon={<Star className="w-5 h-5" />} label="평균 평점" value={String(avgRating)} />
-          <SparklineCard reviews={reviews} />
-          <ReviewLengthCard reviews={reviews} />
+          <StatCard icon={<TrendingUp className="w-5 h-5" />} label="긍정 비율" value={`${positiveRate}%`} />
+          <StatCard icon={<BarChart3 className="w-5 h-5" />} label="분석 리뷰" value={String(reviews.filter(r => r.sentiment).length)} />
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SentimentChart data={computedSentimentDist} />
           <RatingDistribution data={computedRatingDist} />
           <SentimentTrend />
-        </section>
-
-        <section>
-          <SplitKeywordCloud reviews={reviews} externalKeywords={keywords} />
+          <KeywordCloud keywords={keywords} />
         </section>
 
         <section>
