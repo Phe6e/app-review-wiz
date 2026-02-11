@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
-import { Review } from '@/data/mockData';
+import { ReviewResult } from '@/lib/api';
 
 const sentimentConfig = {
   positive: { label: '긍정', className: 'bg-positive/15 text-positive' },
@@ -16,10 +16,10 @@ const StarRating = ({ rating }: { rating: number }) => (
   </div>
 );
 
-const ReviewCard = ({ review }: { review: Review }) => {
+const ReviewCard = ({ review }: { review: ReviewResult }) => {
   const [expanded, setExpanded] = useState(false);
   const isLong = review.content.length > 80;
-  const sentiment = sentimentConfig[review.sentiment];
+  const sentiment = review.sentiment ? sentimentConfig[review.sentiment] : null;
 
   return (
     <div className="glass-card p-5 animate-fade-in hover:border-primary/20 transition-all duration-300">
@@ -27,22 +27,26 @@ const ReviewCard = ({ review }: { review: Review }) => {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span className="font-display font-semibold text-foreground">{review.author}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sentiment.className}`}>
-              {sentiment.label}
-            </span>
+            {sentiment && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sentiment.className}`}>
+                {sentiment.label}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <StarRating rating={review.rating} />
             <span className="text-xs text-muted-foreground">{review.date}</span>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground text-sm">
-          <ThumbsUp className="w-3.5 h-3.5" />
-          <span>{review.helpful}</span>
-        </div>
+        {review.helpful !== undefined && (
+          <div className="flex items-center gap-1 text-muted-foreground text-sm">
+            <ThumbsUp className="w-3.5 h-3.5" />
+            <span>{review.helpful}</span>
+          </div>
+        )}
       </div>
 
-      <h4 className="font-display font-medium text-foreground mb-1">{review.title}</h4>
+      {review.title && <h4 className="font-display font-medium text-foreground mb-1">{review.title}</h4>}
       <p className="text-sm text-muted-foreground leading-relaxed">
         {isLong && !expanded ? review.content.slice(0, 80) + '...' : review.content}
       </p>
