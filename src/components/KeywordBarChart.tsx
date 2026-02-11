@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 
 interface KeywordItem {
   text: string;
@@ -12,93 +11,99 @@ interface KeywordBarChartProps {
 }
 
 const KeywordBarChart = ({ keywords = [] }: KeywordBarChartProps) => {
-  const chartData = useMemo(() => {
+  const rows = useMemo(() => {
     const pos = keywords
       .filter(k => k.sentiment === 'positive')
       .sort((a, b) => b.weight - a.weight)
-      .slice(0, 5)
-      .map(k => ({ text: k.text, value: -k.weight, type: 'positive' as const }));
+      .slice(0, 5);
 
     const neg = keywords
       .filter(k => k.sentiment === 'negative')
       .sort((a, b) => b.weight - a.weight)
-      .slice(0, 5)
-      .map(k => ({ text: k.text, value: k.weight, type: 'negative' as const }));
+      .slice(0, 5);
 
-    // Interleave: positive on top (negative values = left), negative below (positive values = right)
-    const all = [...pos, ...neg];
-    return all;
+    const maxLen = Math.max(pos.length, neg.length, 1);
+    const maxWeight = Math.max(
+      ...pos.map(k => k.weight),
+      ...neg.map(k => k.weight),
+      1
+    );
+
+    const result = [];
+    for (let i = 0; i < maxLen; i++) {
+      result.push({
+        posText: pos[i]?.text || '',
+        posWeight: pos[i]?.weight || 0,
+        negText: neg[i]?.text || '',
+        negWeight: neg[i]?.weight || 0,
+        posWidth: pos[i] ? (pos[i].weight / maxWeight) * 100 : 0,
+        negWidth: neg[i] ? (neg[i].weight / maxWeight) * 100 : 0,
+      });
+    }
+    return result;
   }, [keywords]);
 
-  const tooltipStyle = {
-    background: 'hsl(222, 40%, 10%)',
-    border: '1px solid hsl(222, 30%, 22%)',
-    borderRadius: '8px',
-    color: 'hsl(210, 40%, 96%)',
-    fontSize: '12px',
-  };
-
-  const maxVal = useMemo(() => {
-    if (chartData.length === 0) return 10;
-    return Math.max(...chartData.map(d => Math.abs(d.value)), 1);
-  }, [chartData]);
+  if (rows.length === 0 || (rows[0].posWeight === 0 && rows[0].negWeight === 0)) {
+    return (
+      <div className="glass-card p-6 flex flex-col h-full">
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">주요 키워드</h3>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">데이터 없음</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-2 text-center">주요 키워드</h3>
-      <div className="flex items-center justify-center gap-4 mb-3">
+      <h3 className="font-semibold text-base text-foreground mb-2 text-center">주요 키워드</h3>
+      <div className="flex items-center justify-center gap-6 mb-4">
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(199, 70%, 55%)' }} />
-          <span className="text-xs text-muted-foreground">긍정 ←</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(210, 55%, 55%)' }} />
+          <span className="text-xs text-muted-foreground">← 긍정</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">→ 부정</span>
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(0, 72%, 55%)' }} />
+          <span className="text-xs text-muted-foreground">부정 →</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(0, 50%, 58%)' }} />
         </div>
       </div>
-      <div className="flex-1 flex items-center justify-center">
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={Math.max(chartData.length * 32, 180)}>
-            <BarChart data={chartData} layout="vertical" margin={{ left: 5, right: 5, top: 5, bottom: 5 }}>
-              <XAxis
-                type="number"
-                domain={[-maxVal, maxVal]}
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={10}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v: number) => String(Math.abs(v))}
+      <div className="flex-1 flex flex-col justify-center gap-2">
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-0 h-7">
+            {/* Positive keyword text - left edge */}
+            <span className="text-xs text-muted-foreground w-16 text-right truncate pr-2 flex-shrink-0">
+              {row.posText}
+            </span>
+            {/* Positive bar - grows right-to-left */}
+            <div className="flex-1 flex justify-end">
+              <div
+                className="h-5 rounded-l-md transition-all duration-500"
+                style={{
+                  width: `${row.posWidth}%`,
+                  background: `hsl(${210 + i * 5}, 55%, ${55 + i * 3}%)`,
+                  minWidth: row.posWidth > 0 ? '4px' : '0',
+                }}
               />
-              <YAxis
-                type="category"
-                dataKey="text"
-                stroke="hsl(215, 20%, 55%)"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                width={55}
+            </div>
+            {/* Center divider */}
+            <div className="w-px h-5 bg-border flex-shrink-0 mx-0.5" />
+            {/* Negative bar - grows left-to-right */}
+            <div className="flex-1 flex justify-start">
+              <div
+                className="h-5 rounded-r-md transition-all duration-500"
+                style={{
+                  width: `${row.negWidth}%`,
+                  background: `hsl(${i * 5}, 50%, ${58 + i * 2}%)`,
+                  minWidth: row.negWidth > 0 ? '4px' : '0',
+                }}
               />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(v: number) => [Math.abs(v), '빈도']}
-              />
-              <ReferenceLine x={0} stroke="hsl(215, 20%, 35%)" strokeWidth={1} />
-              <Bar dataKey="value" radius={[4, 4, 4, 4]} barSize={16}>
-                {chartData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={entry.type === 'positive'
-                      ? `hsl(${190 + i * 8}, 65%, ${52 + i * 2}%)`
-                      : `hsl(${i * 8}, 70%, ${52 + i * 2}%)`
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-xs text-muted-foreground">데이터 없음</p>
-        )}
+            </div>
+            {/* Negative keyword text - right edge */}
+            <span className="text-xs text-muted-foreground w-16 text-left truncate pl-2 flex-shrink-0">
+              {row.negText}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

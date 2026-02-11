@@ -270,8 +270,8 @@ const Index = () => {
   }, [dateFilteredReviews, keywords]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
+    <div className="min-h-screen bg-background bg-gradient-to-br from-[hsl(220,20%,95%)] via-[hsl(240,10%,97%)] to-[hsl(280,15%,95%)]">
+      <header className="border-b border-border/50 bg-white/40 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold">

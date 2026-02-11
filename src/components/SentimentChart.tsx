@@ -15,22 +15,24 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">감성 분석</h3>
-      <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6">
-        <div className="w-40 h-40 flex-shrink-0">
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 분석</h3>
+      <div className="flex-1 flex flex-row items-center justify-center gap-6">
+        <div className="w-36 h-36 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" strokeWidth={0}>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
                 {data.map((entry, index) => (
                   <Cell key={index} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip
                 contentStyle={{
-                  background: 'hsl(222 40% 10%)',
-                  border: '1px solid hsl(222 30% 22%)',
-                  borderRadius: '8px',
-                  color: 'hsl(210 40% 96%)',
+                  background: 'rgba(255,255,255,0.9)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: '10px',
+                  color: 'hsl(220, 15%, 20%)',
+                  fontSize: '12px',
                 }}
               />
             </PieChart>
@@ -41,7 +43,7 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
             <div key={d.name} className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
               <span className="text-sm text-muted-foreground w-8">{d.name}</span>
-              <span className="text-sm font-display font-semibold text-foreground">
+              <span className="text-sm font-semibold text-foreground">
                 {total > 0 ? Math.round(d.value / total * 100) : 0}%
               </span>
               <span className="text-xs text-muted-foreground">({d.value})</span>
