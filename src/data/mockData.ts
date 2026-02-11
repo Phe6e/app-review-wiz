@@ -80,9 +80,9 @@ export const ratingDistribution = [
 ];
 
 export const sentimentData = [
-  { name: '긍정', value: 52, color: 'hsl(152, 60%, 48%)' },
-  { name: '부정', value: 32, color: 'hsl(0, 72%, 55%)' },
-  { name: '중립', value: 16, color: 'hsl(38, 92%, 55%)' },
+  { name: '긍정', value: 52, color: '#007AFF' },
+  { name: '부정', value: 32, color: '#FF3B30' },
+  { name: '중립', value: 16, color: '#8E8E93' },
 ];
 
 export const trendData = [

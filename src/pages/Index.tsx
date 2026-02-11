@@ -63,9 +63,9 @@ const Index = () => {
         if (analysis.sentimentDistribution) {
           const sd = analysis.sentimentDistribution;
           setSentimentDist([
-            { name: '긍정', value: sd.positive || 0, color: 'hsl(142, 71%, 45%)' },
-            { name: '부정', value: sd.negative || 0, color: 'hsl(4, 90%, 60%)' },
-            { name: '중립', value: sd.neutral || 0, color: 'hsl(240, 4%, 56%)' },
+            { name: '긍정', value: sd.positive || 0, color: '#007AFF' },
+            { name: '부정', value: sd.negative || 0, color: '#FF3B30' },
+            { name: '중립', value: sd.neutral || 0, color: '#8E8E93' },
           ]);
         }
       }
@@ -166,9 +166,9 @@ const Index = () => {
             if (analysis.sentimentDistribution) {
               const sd = analysis.sentimentDistribution;
               setSentimentDist([
-                { name: '긍정', value: sd.positive || 0, color: 'hsl(142, 71%, 45%)' },
-                { name: '부정', value: sd.negative || 0, color: 'hsl(4, 90%, 60%)' },
-                { name: '중립', value: sd.neutral || 0, color: 'hsl(240, 4%, 56%)' },
+                { name: '긍정', value: sd.positive || 0, color: '#007AFF' },
+                { name: '부정', value: sd.negative || 0, color: '#FF3B30' },
+                { name: '중립', value: sd.neutral || 0, color: '#8E8E93' },
               ]);
             }
           }
@@ -241,9 +241,9 @@ const Index = () => {
     const neg = analyzed.filter(r => r.sentiment === 'negative').length;
     const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
     return [
-      { name: '긍정', value: pos, color: 'hsl(142, 71%, 45%)' },
-      { name: '부정', value: neg, color: 'hsl(4, 90%, 60%)' },
-      { name: '중립', value: neu, color: 'hsl(240, 4%, 56%)' },
+      { name: '긍정', value: pos, color: '#007AFF' },
+      { name: '부정', value: neg, color: '#FF3B30' },
+      { name: '중립', value: neu, color: '#8E8E93' },
     ];
   }, [dateFilteredReviews, sentimentDist]);
 
@@ -273,8 +273,14 @@ const Index = () => {
   }, [dateFilteredReviews, keywords]);
 
   return (
-    <div className="min-h-screen bg-background bg-gradient-to-br from-[hsl(220,20%,95%)] via-[hsl(240,10%,97%)] to-[hsl(280,15%,95%)]">
-      <header className="border-b border-border/50 bg-white/40 backdrop-blur-xl">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Mesh gradient blobs */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-[hsl(211,100%,92%)] opacity-40 blur-[120px]" />
+        <div className="absolute bottom-[-15%] right-[-5%] w-[50vw] h-[50vw] rounded-full bg-[hsl(265,50%,92%)] opacity-30 blur-[120px]" />
+        <div className="absolute top-[40%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-[hsl(200,60%,93%)] opacity-25 blur-[100px]" />
+      </div>
+      <header className="border-b border-border/50 bg-white/30 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold">
