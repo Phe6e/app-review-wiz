@@ -14,13 +14,13 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="glass-card p-6">
+    <div className="glass-card p-6 flex flex-col h-full">
       <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">감성 분석</h3>
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-44 h-44">
+      <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6">
+        <div className="w-40 h-40 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" strokeWidth={0}>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" strokeWidth={0}>
                 {data.map((entry, index) => (
                   <Cell key={index} fill={entry.color} />
                 ))}
@@ -39,11 +39,12 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
         <div className="flex flex-col gap-3">
           {data.map(d => (
             <div key={d.name} className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
-              <span className="text-sm text-muted-foreground">{d.name}</span>
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+              <span className="text-sm text-muted-foreground w-8">{d.name}</span>
               <span className="text-sm font-display font-semibold text-foreground">
                 {total > 0 ? Math.round(d.value / total * 100) : 0}%
               </span>
+              <span className="text-xs text-muted-foreground">({d.value})</span>
             </div>
           ))}
         </div>
