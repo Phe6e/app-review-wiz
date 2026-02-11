@@ -15,9 +15,9 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
 
   return (
     <div className="glass-card p-6">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4">감성 분석</h3>
-      <div className="flex items-center gap-6">
-        <div className="w-40 h-40">
+      <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">감성 분석</h3>
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-44 h-44">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" strokeWidth={0}>

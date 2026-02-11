@@ -7,10 +7,11 @@ import ReviewFilters from '@/components/ReviewFilters';
 import SentimentChart from '@/components/SentimentChart';
 import RatingDistribution from '@/components/RatingDistribution';
 import SentimentTrend from '@/components/SentimentTrend';
-import KeywordCloud from '@/components/KeywordCloud';
+import KeywordBarChart from '@/components/KeywordBarChart';
+import DateRangePicker from '@/components/DateRangePicker';
 import StatCard from '@/components/StatCard';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
-import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution, trendData } from '@/data/mockData';
+import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution } from '@/data/mockData';
 
 const Index = () => {
   const [store, setStore] = useState<Store>('apple');
@@ -27,6 +28,23 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [dateStart, setDateStart] = useState<Date | undefined>(undefined);
+  const [dateEnd, setDateEnd] = useState<Date | undefined>(undefined);
+
+  // Date-filtered reviews
+  const dateFilteredReviews = useMemo(() => {
+    if (!dateStart && !dateEnd) return reviews;
+    return reviews.filter(r => {
+      const d = new Date(r.date);
+      if (dateStart && d < dateStart) return false;
+      if (dateEnd) {
+        const endOfDay = new Date(dateEnd);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (d > endOfDay) return false;
+      }
+      return true;
+    });
+  }, [reviews, dateStart, dateEnd]);
 
   const analyzeAndUpdate = useCallback(async (allReviews: ReviewResult[]) => {
     setAnalyzing(true);
@@ -60,6 +78,8 @@ const Index = () => {
     setCurrentPage(1);
     setHasNextPage(false);
     setReviews([]);
+    setDateStart(undefined);
+    setDateEnd(undefined);
 
     try {
       const result = await fetchReviews(app.id, store, 'kr', 1);
@@ -111,7 +131,6 @@ const Index = () => {
         setCurrentPage(nextPage);
         setHasNextPage(result.hasNextPage || false);
 
-        // Merge reviews first
         const mergedReviewsPromise = new Promise<ReviewResult[]>((resolve) => {
           setReviews(prev => {
             const allReviews = [...prev, ...newReviews];
@@ -120,18 +139,15 @@ const Index = () => {
           });
         });
 
-        // Restore scroll position immediately after state update
         requestAnimationFrame(() => {
           window.scrollTo(0, scrollY);
         });
 
-        // Run analysis on ALL merged reviews
         const allReviews = await mergedReviewsPromise;
         setAnalyzing(true);
         try {
           const analysis = await analyzeReviews(allReviews);
           if (analysis.success) {
-            // Merge sentiment data into existing reviews instead of replacing
             setReviews(prev => {
               const sentimentMap = new Map<string, ReviewResult>();
               for (const r of analysis.reviews) {
@@ -167,27 +183,26 @@ const Index = () => {
   }, [selectedApp, store, currentPage, hasNextPage, loadingMore]);
 
   const filteredReviews = useMemo(() => {
-    return reviews.filter(r => {
+    return dateFilteredReviews.filter(r => {
       if (ratingFilter && r.rating !== ratingFilter) return false;
       if (sentimentFilter && r.sentiment !== sentimentFilter) return false;
       return true;
     });
-  }, [reviews, ratingFilter, sentimentFilter]);
+  }, [dateFilteredReviews, ratingFilter, sentimentFilter]);
 
   const avgRating = useMemo(() => {
-    if (reviews.length === 0) return selectedApp?.rating || 0;
-    return Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
-  }, [reviews, selectedApp]);
+    if (dateFilteredReviews.length === 0) return selectedApp?.rating || 0;
+    return Math.round((dateFilteredReviews.reduce((s, r) => s + r.rating, 0) / dateFilteredReviews.length) * 10) / 10;
+  }, [dateFilteredReviews, selectedApp]);
 
-  // 평점 변동 추이: 전월 대비 변화량 계산
   const ratingTrend = useMemo(() => {
-    if (reviews.length === 0) return { change: 0, direction: 'neutral' as const };
+    if (dateFilteredReviews.length === 0) return { change: 0, direction: 'neutral' as const };
     const now = new Date();
-    const thisMonth = reviews.filter(r => {
+    const thisMonth = dateFilteredReviews.filter(r => {
       const d = new Date(r.date);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
-    const lastMonth = reviews.filter(r => {
+    const lastMonth = dateFilteredReviews.filter(r => {
       const d = new Date(r.date);
       const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       return d.getMonth() === prev.getMonth() && d.getFullYear() === prev.getFullYear();
@@ -196,29 +211,26 @@ const Index = () => {
     const lastAvg = lastMonth.length > 0 ? lastMonth.reduce((s, r) => s + r.rating, 0) / lastMonth.length : thisAvg;
     const change = lastAvg > 0 ? Math.round(((thisAvg - lastAvg) / lastAvg) * 1000) / 10 : 0;
     return { change, direction: change > 0 ? 'up' as const : change < 0 ? 'down' as const : 'neutral' as const };
-  }, [reviews, avgRating]);
+  }, [dateFilteredReviews, avgRating]);
 
-  // 리뷰 밀도: 최근 7일 하루 평균 리뷰 수
   const reviewDensity = useMemo(() => {
-    if (reviews.length === 0) return 0;
+    if (dateFilteredReviews.length === 0) return 0;
     const now = Date.now();
     const week = 7 * 24 * 60 * 60 * 1000;
-    const recentCount = reviews.filter(r => now - new Date(r.date).getTime() < week).length;
+    const recentCount = dateFilteredReviews.filter(r => now - new Date(r.date).getTime() < week).length;
     return Math.round((recentCount / 7) * 10) / 10;
-  }, [reviews]);
+  }, [dateFilteredReviews]);
 
-  // Recalculate rating distribution whenever reviews change
   const computedRatingDist = useMemo(() => {
-    if (reviews.length === 0) return ratingDist;
+    if (dateFilteredReviews.length === 0) return ratingDist;
     return [5, 4, 3, 2, 1].map(r => ({
       rating: r,
-      count: reviews.filter((rev: ReviewResult) => rev.rating === r).length,
+      count: dateFilteredReviews.filter((rev: ReviewResult) => rev.rating === r).length,
     }));
-  }, [reviews, ratingDist]);
+  }, [dateFilteredReviews, ratingDist]);
 
-  // Recalculate sentiment distribution from reviews when available
   const computedSentimentDist = useMemo(() => {
-    const analyzed = reviews.filter(r => r.sentiment);
+    const analyzed = dateFilteredReviews.filter(r => r.sentiment);
     if (analyzed.length === 0) return sentimentDist;
     const pos = analyzed.filter(r => r.sentiment === 'positive').length;
     const neg = analyzed.filter(r => r.sentiment === 'negative').length;
@@ -228,7 +240,32 @@ const Index = () => {
       { name: '부정', value: neg, color: 'hsl(0, 72%, 55%)' },
       { name: '중립', value: neu, color: 'hsl(38, 92%, 55%)' },
     ];
-  }, [reviews, sentimentDist]);
+  }, [dateFilteredReviews, sentimentDist]);
+
+  // Compute keyword sentiments from date-filtered reviews for bar chart
+  const computedKeywords = useMemo(() => {
+    const analyzed = dateFilteredReviews.filter(r => r.sentiment && r.keywords && r.keywords.length > 0);
+    if (analyzed.length === 0) {
+      // fallback: use keywords prop but add sentiment based on existing data
+      return keywords.map(k => ({ ...k, sentiment: undefined as 'positive' | 'negative' | 'neutral' | undefined }));
+    }
+    const kwMap = new Map<string, { weight: number; pos: number; neg: number; neu: number }>();
+    for (const r of analyzed) {
+      for (const kw of r.keywords!) {
+        const entry = kwMap.get(kw) || { weight: 0, pos: 0, neg: 0, neu: 0 };
+        entry.weight++;
+        if (r.sentiment === 'positive') entry.pos++;
+        else if (r.sentiment === 'negative') entry.neg++;
+        else entry.neu++;
+        kwMap.set(kw, entry);
+      }
+    }
+    return Array.from(kwMap.entries()).map(([text, v]) => ({
+      text,
+      weight: v.weight,
+      sentiment: (v.pos >= v.neg && v.pos >= v.neu ? 'positive' : v.neg >= v.pos ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
+    }));
+  }, [dateFilteredReviews, keywords]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -275,8 +312,18 @@ const Index = () => {
           </section>
         )}
 
+        {/* Date Range Picker */}
+        <section>
+          <DateRangePicker
+            startDate={dateStart}
+            endDate={dateEnd}
+            onStartDateChange={setDateStart}
+            onEndDateChange={setDateEnd}
+          />
+        </section>
+
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={reviews.length > 0 ? reviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
+          <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
           <StatCard icon={<Star className="w-5 h-5" />} label="평균 평점" value={String(avgRating)} />
           <StatCard
             icon={<TrendingUp className="w-5 h-5" />}
@@ -295,15 +342,15 @@ const Index = () => {
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SentimentChart data={computedSentimentDist} />
           <RatingDistribution data={computedRatingDist} />
-          <SentimentTrend reviews={reviews} />
-          <KeywordCloud keywords={keywords} />
+          <SentimentTrend reviews={dateFilteredReviews} />
+          <KeywordBarChart keywords={computedKeywords} />
         </section>
 
         <section>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
             <h3 className="text-xl font-display font-bold text-foreground">
               최신 리뷰
-              {reviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}건)</span>}
+              {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}건)</span>}
             </h3>
             <ReviewFilters
               selectedRating={ratingFilter}
