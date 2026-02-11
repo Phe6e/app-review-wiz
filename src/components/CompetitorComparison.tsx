@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Loader2, Star, TrendingUp, Zap } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import AppSearchBar from '@/components/AppSearchBar';
-import SentimentChart from '@/components/SentimentChart';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
 
 interface CompetitorComparisonProps {
@@ -16,117 +16,179 @@ interface AppAnalysis {
   reviews: ReviewResult[];
   keywords: { text: string; weight: number; sentiment?: string }[];
   sentimentDist: { name: string; value: number; color: string }[];
+  ratingDist: { rating: number; count: number }[];
   avgRating: number;
   loading: boolean;
+  progress?: string;
+}
+
+// Fetch up to 300 reviews by calling multiple pages
+async function fetchBulkReviews(appId: string, store: Store, country: string, maxReviews = 300): Promise<ReviewResult[]> {
+  const allReviews: ReviewResult[] = [];
+  let page = 1;
+  const maxPages = Math.ceil(maxReviews / 50); // ~50 per page
+
+  while (page <= maxPages) {
+    const result = await fetchReviews(appId, store, country, page);
+    if (!result.success || !result.reviews?.length) break;
+    allReviews.push(...result.reviews);
+    if (allReviews.length >= maxReviews || !result.hasNextPage) break;
+    page++;
+  }
+
+  return allReviews.slice(0, maxReviews);
+}
+
+function buildAnalysis(reviews: ReviewResult[]): {
+  keywords: { text: string; weight: number; sentiment?: string }[];
+  sentimentDist: { name: string; value: number; color: string }[];
+  ratingDist: { rating: number; count: number }[];
+  avgRating: number;
+} {
+  const analyzed = reviews.filter(r => r.sentiment);
+  const pos = analyzed.filter(r => r.sentiment === 'positive').length;
+  const neg = analyzed.filter(r => r.sentiment === 'negative').length;
+  const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
+
+  const kwMap = new Map<string, { weight: number; sentiment: string }>();
+  for (const r of analyzed) {
+    if (!r.keywords) continue;
+    for (const kw of r.keywords) {
+      const e = kwMap.get(kw) || { weight: 0, sentiment: r.sentiment || 'neutral' };
+      e.weight++;
+      kwMap.set(kw, e);
+    }
+  }
+
+  return {
+    keywords: Array.from(kwMap.entries())
+      .map(([text, v]) => ({ text, weight: v.weight, sentiment: v.sentiment }))
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5),
+    sentimentDist: [
+      { name: '긍정', value: pos, color: '#007AFF' },
+      { name: '부정', value: neg, color: '#FF3B30' },
+      { name: '중립', value: neu, color: '#8E8E93' },
+    ],
+    ratingDist: [5, 4, 3, 2, 1].map(r => ({
+      rating: r,
+      count: reviews.filter(rev => rev.rating === r).length,
+    })),
+    avgRating: reviews.length > 0
+      ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
+      : 0,
+  };
 }
 
 const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorComparisonProps) => {
-  const [competitor, setCompetitor] = useState<AppAnalysis | null>(null);
+  const [competitorApp, setCompetitorApp] = useState<AppResult | null>(null);
+  const [competitorReviews, setCompetitorReviews] = useState<ReviewResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState('');
 
-  const myAnalysis = useMemo((): AppAnalysis | null => {
-    if (!myApp) return null;
-    const analyzed = myReviews.filter(r => r.sentiment);
-    const pos = analyzed.filter(r => r.sentiment === 'positive').length;
-    const neg = analyzed.filter(r => r.sentiment === 'negative').length;
-    const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
-
-    const kwMap = new Map<string, { weight: number; sentiment: string }>();
-    for (const r of analyzed) {
-      if (!r.keywords) continue;
-      for (const kw of r.keywords) {
-        const e = kwMap.get(kw) || { weight: 0, sentiment: r.sentiment || 'neutral' };
-        e.weight++;
-        kwMap.set(kw, e);
-      }
-    }
-
-    return {
-      app: myApp,
-      reviews: myReviews,
-      keywords: Array.from(kwMap.entries())
-        .map(([text, v]) => ({ text, weight: v.weight, sentiment: v.sentiment }))
-        .sort((a, b) => b.weight - a.weight)
-        .slice(0, 5),
-      sentimentDist: [
-        { name: '긍정', value: pos, color: '#007AFF' },
-        { name: '부정', value: neg, color: '#FF3B30' },
-        { name: '중립', value: neu, color: '#8E8E93' },
-      ],
-      avgRating: myReviews.length > 0
-        ? Math.round((myReviews.reduce((s, r) => s + r.rating, 0) / myReviews.length) * 10) / 10
-        : myApp.rating,
-      loading: false,
-    };
+  // My app analysis from date-filtered reviews
+  const myAnalysis = useMemo(() => {
+    if (!myApp || myReviews.length === 0) return null;
+    const analysis = buildAnalysis(myReviews);
+    // Override colors for "my app" blue theme
+    analysis.sentimentDist = [
+      { name: '긍정', value: analysis.sentimentDist[0].value, color: '#007AFF' },
+      { name: '부정', value: analysis.sentimentDist[1].value, color: '#FF3B30' },
+      { name: '중립', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
+    ];
+    return { ...analysis, avgRating: analysis.avgRating || myApp.rating };
   }, [myApp, myReviews]);
 
+  // Competitor analysis from date-filtered competitor reviews
+  const compAnalysis = useMemo(() => {
+    if (!competitorApp || competitorReviews.length === 0) return null;
+    const analysis = buildAnalysis(competitorReviews);
+    // Purple theme for competitor
+    analysis.sentimentDist = [
+      { name: '긍정', value: analysis.sentimentDist[0].value, color: '#5856D6' },
+      { name: '부정', value: analysis.sentimentDist[1].value, color: '#FF9500' },
+      { name: '중립', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
+    ];
+    return { ...analysis, avgRating: analysis.avgRating || competitorApp.rating };
+  }, [competitorApp, competitorReviews]);
+
   const handleSelectCompetitor = useCallback(async (app: AppResult) => {
-    setCompetitor({
-      app,
-      reviews: [],
-      keywords: [],
-      sentimentDist: [
-        { name: '긍정', value: 0, color: '#5856D6' },
-        { name: '부정', value: 0, color: '#FF9500' },
-        { name: '중립', value: 0, color: '#8E8E93' },
-      ],
-      avgRating: app.rating,
-      loading: true,
-    });
+    setCompetitorApp(app);
+    setCompetitorReviews([]);
+    setLoading(true);
+    setProgress('경쟁사 리뷰 수집 중...');
 
     try {
-      const result = await fetchReviews(app.id, store, country, 1);
-      if (result.success && result.reviews?.length > 0) {
-        const reviews = result.reviews.slice(0, 100);
+      const reviews = await fetchBulkReviews(app.id, store, country, 300);
+      setProgress(`${reviews.length}개 리뷰 감성 분석 중...`);
+
+      if (reviews.length > 0) {
         const analysis = await analyzeReviews(reviews);
-
-        const analyzed = analysis.success ? analysis.reviews : reviews;
-        const pos = analyzed.filter((r: ReviewResult) => r.sentiment === 'positive').length;
-        const neg = analyzed.filter((r: ReviewResult) => r.sentiment === 'negative').length;
-        const neu = analyzed.filter((r: ReviewResult) => r.sentiment === 'neutral').length;
-
-        const kwMap = new Map<string, { weight: number; sentiment: string }>();
-        for (const r of analyzed) {
-          if (!r.keywords) continue;
-          for (const kw of r.keywords) {
-            const e = kwMap.get(kw) || { weight: 0, sentiment: r.sentiment || 'neutral' };
-            e.weight++;
-            kwMap.set(kw, e);
-          }
-        }
-
-        setCompetitor({
-          app,
-          reviews: analyzed,
-          keywords: Array.from(kwMap.entries())
-            .map(([text, v]) => ({ text, weight: v.weight, sentiment: v.sentiment }))
-            .sort((a, b) => b.weight - a.weight)
-            .slice(0, 5),
-          sentimentDist: [
-            { name: '긍정', value: pos, color: '#5856D6' },
-            { name: '부정', value: neg, color: '#FF9500' },
-            { name: '중립', value: neu, color: '#8E8E93' },
-          ],
-          avgRating: analyzed.length > 0
-            ? Math.round((analyzed.reduce((s: number, r: ReviewResult) => s + r.rating, 0) / analyzed.length) * 10) / 10
-            : app.rating,
-          loading: false,
-        });
-      } else {
-        setCompetitor(prev => prev ? { ...prev, loading: false } : null);
+        setCompetitorReviews(analysis.success ? analysis.reviews : reviews);
       }
     } catch (e) {
       console.error('Competitor fetch error:', e);
-      setCompetitor(prev => prev ? { ...prev, loading: false } : null);
+    } finally {
+      setLoading(false);
+      setProgress('');
     }
   }, [store, country]);
 
-  const ratingDiff = competitor && !competitor.loading && myAnalysis
-    ? Math.round((myAnalysis.avgRating - competitor.avgRating) * 10) / 10
+  // Also fetch 300 reviews for my app when entering competitor tab (if we have fewer)
+  const [myBulkReviews, setMyBulkReviews] = useState<ReviewResult[]>([]);
+  const [myBulkLoading, setMyBulkLoading] = useState(false);
+
+  useEffect(() => {
+    if (!myApp) return;
+    // If myReviews already has enough data, skip
+    if (myReviews.length >= 100) {
+      setMyBulkReviews([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchBulk = async () => {
+      setMyBulkLoading(true);
+      try {
+        const reviews = await fetchBulkReviews(myApp.id, store, country, 300);
+        if (!cancelled && reviews.length > 0) {
+          const analysis = await analyzeReviews(reviews);
+          if (!cancelled) {
+            setMyBulkReviews(analysis.success ? analysis.reviews : reviews);
+          }
+        }
+      } catch (e) {
+        console.error('Bulk fetch error:', e);
+      } finally {
+        if (!cancelled) setMyBulkLoading(false);
+      }
+    };
+    fetchBulk();
+    return () => { cancelled = true; };
+  }, [myApp?.id, store, country]);
+
+  // Use bulk reviews if available, otherwise use passed-in myReviews
+  const effectiveMyReviews = myBulkReviews.length > 0 ? myBulkReviews : myReviews;
+
+  const effectiveMyAnalysis = useMemo(() => {
+    if (!myApp) return null;
+    if (effectiveMyReviews.length === 0) return myAnalysis;
+    const analysis = buildAnalysis(effectiveMyReviews);
+    analysis.sentimentDist = [
+      { name: '긍정', value: analysis.sentimentDist[0].value, color: '#007AFF' },
+      { name: '부정', value: analysis.sentimentDist[1].value, color: '#FF3B30' },
+      { name: '중립', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
+    ];
+    return { ...analysis, avgRating: analysis.avgRating || myApp.rating };
+  }, [myApp, effectiveMyReviews, myAnalysis]);
+
+  // Rating diff
+  const ratingDiff = compAnalysis && effectiveMyAnalysis
+    ? Math.round((effectiveMyAnalysis.avgRating - compAnalysis.avgRating) * 10) / 10
     : null;
 
-  // Generate insights
+  // Insights
   const insights = useMemo(() => {
-    if (!competitor || competitor.loading || !myAnalysis) return [];
+    if (!compAnalysis || !effectiveMyAnalysis) return [];
     const items: string[] = [];
 
     if (ratingDiff !== null) {
@@ -135,10 +197,10 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
       else items.push('두 앱의 평균 평점이 동일합니다.');
     }
 
-    const myPos = myAnalysis.sentimentDist.find(d => d.name === '긍정')?.value || 0;
-    const myTotal = myAnalysis.sentimentDist.reduce((s, d) => s + d.value, 0) || 1;
-    const compPos = competitor.sentimentDist.find(d => d.name === '긍정')?.value || 0;
-    const compTotal = competitor.sentimentDist.reduce((s, d) => s + d.value, 0) || 1;
+    const myPos = effectiveMyAnalysis.sentimentDist.find(d => d.name === '긍정')?.value || 0;
+    const myTotal = effectiveMyAnalysis.sentimentDist.reduce((s, d) => s + d.value, 0) || 1;
+    const compPos = compAnalysis.sentimentDist.find(d => d.name === '긍정')?.value || 0;
+    const compTotal = compAnalysis.sentimentDist.reduce((s, d) => s + d.value, 0) || 1;
     const myPosRate = Math.round((myPos / myTotal) * 100);
     const compPosRate = Math.round((compPos / compTotal) * 100);
     if (myPosRate > compPosRate) {
@@ -147,21 +209,21 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
       items.push(`경쟁사의 긍정 리뷰 비율이 ${compPosRate - myPosRate}%p 더 높습니다.`);
     }
 
-    const myKws = new Set(myAnalysis.keywords.map(k => k.text));
-    const compKws = new Set(competitor.keywords.map(k => k.text));
-    const unique = myAnalysis.keywords.filter(k => !compKws.has(k.text));
+    const myKws = new Set(effectiveMyAnalysis.keywords.map(k => k.text));
+    const compKws = new Set(compAnalysis.keywords.map(k => k.text));
+    const unique = effectiveMyAnalysis.keywords.filter(k => !compKws.has(k.text));
     if (unique.length > 0) {
       items.push(`우리 앱만의 강점 키워드: ${unique.map(k => `'${k.text}'`).join(', ')}`);
     }
-    const compUnique = competitor.keywords.filter(k => !myKws.has(k.text));
+    const compUnique = compAnalysis.keywords.filter(k => !myKws.has(k.text));
     if (compUnique.length > 0) {
       items.push(`경쟁사만의 강점 키워드: ${compUnique.map(k => `'${k.text}'`).join(', ')}`);
     }
 
     return items;
-  }, [myAnalysis, competitor, ratingDiff]);
+  }, [effectiveMyAnalysis, compAnalysis, ratingDiff]);
 
-  if (!myApp || !myAnalysis) {
+  if (!myApp) {
     return (
       <div className="glass-card p-16 text-center animate-fade-in">
         <p className="text-muted-foreground text-lg font-medium">먼저 '내 앱 분석' 탭에서 앱을 검색해주세요.</p>
@@ -174,7 +236,6 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
     <div className="space-y-6 animate-fade-in">
       {/* VS Header */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-        {/* My App */}
         <div className="glass-card p-5 flex items-center gap-4">
           {myApp.icon && <img src={myApp.icon} alt={myApp.name} className="w-12 h-12 rounded-xl" />}
           <div className="min-w-0">
@@ -188,20 +249,19 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
 
         <div className="text-center font-bold text-lg text-muted-foreground hidden md:block">VS</div>
 
-        {/* Competitor Search */}
         <div>
-          {competitor ? (
+          {competitorApp ? (
             <div className="glass-card p-5 flex items-center gap-4">
-              {competitor.app.icon && <img src={competitor.app.icon} alt={competitor.app.name} className="w-12 h-12 rounded-xl" />}
+              {competitorApp.icon && <img src={competitorApp.icon} alt={competitorApp.name} className="w-12 h-12 rounded-xl" />}
               <div className="min-w-0">
-                <p className="font-semibold text-foreground truncate">{competitor.app.name}</p>
-                <p className="text-sm text-muted-foreground">{competitor.app.developer}</p>
+                <p className="font-semibold text-foreground truncate">{competitorApp.name}</p>
+                <p className="text-sm text-muted-foreground">{competitorApp.developer}</p>
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <div className="px-3 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(88, 86, 214, 0.1)', color: '#5856D6' }}>
                   경쟁사
                 </div>
-                <button onClick={() => setCompetitor(null)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">변경</button>
+                <button onClick={() => { setCompetitorApp(null); setCompetitorReviews([]); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">변경</button>
               </div>
             </div>
           ) : (
@@ -210,41 +270,47 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
         </div>
       </div>
 
-      {competitor?.loading && (
+      {/* Loading States */}
+      {(loading || myBulkLoading) && (
         <div className="glass-card p-12 text-center">
-          <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mb-2" />
-          <p className="text-muted-foreground">경쟁사 리뷰를 분석하고 있습니다...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mb-3" />
+          <p className="text-foreground font-medium">
+            {loading ? '경쟁사 데이터를 정밀 분석 중입니다...' : '우리 앱 데이터를 확장 수집 중입니다...'}
+          </p>
+          {progress && <p className="text-sm text-muted-foreground mt-1">{progress}</p>}
         </div>
       )}
 
-      {competitor && !competitor.loading && (
+      {compAnalysis && effectiveMyAnalysis && !loading && (
         <>
-          {/* Rating Comparison */}
-          <div className="glass-card p-6">
-            <h3 className="font-semibold text-base text-foreground mb-5 text-center flex items-center justify-center gap-2">
-              <Star className="w-4 h-4" /> 별점 비교
-            </h3>
-            <div className="grid grid-cols-2 gap-6">
-              <RatingBar label={myApp.name} rating={myAnalysis.avgRating} color="#007AFF" />
-              <RatingBar label={competitor.app.name} rating={competitor.avgRating} color="#5856D6" />
-            </div>
+          {/* Rating Comparison - Two separate cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <RatingCard
+              label="우리 앱 별점"
+              appName={myApp.name}
+              avgRating={effectiveMyAnalysis.avgRating}
+              ratingDist={effectiveMyAnalysis.ratingDist}
+              color="#007AFF"
+            />
+            <RatingCard
+              label="경쟁 앱 별점"
+              appName={competitorApp!.name}
+              avgRating={compAnalysis.avgRating}
+              ratingDist={compAnalysis.ratingDist}
+              color="#5856D6"
+            />
           </div>
 
-          {/* Sentiment Comparison */}
+          {/* Sentiment Comparison - Two donut charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SentimentChart data={myAnalysis.sentimentDist} />
-            <div className="glass-card p-6 flex flex-col h-full">
-              <h3 className="font-semibold text-base text-foreground mb-4 text-center">경쟁사 감성 분석</h3>
-              <div className="flex-1">
-                <SentimentChartInner data={competitor.sentimentDist} />
-              </div>
-            </div>
+            <DonutCard title="우리 앱 감성 분석" data={effectiveMyAnalysis.sentimentDist} />
+            <DonutCard title="경쟁사 감성 분석" data={compAnalysis.sentimentDist} />
           </div>
 
           {/* Keyword Comparison */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <KeywordList title="우리 앱 강점 키워드" keywords={myAnalysis.keywords} color="#007AFF" />
-            <KeywordList title="경쟁사 강점 키워드" keywords={competitor.keywords} color="#5856D6" />
+            <KeywordList title="우리 앱 주요 키워드" keywords={effectiveMyAnalysis.keywords} color="#007AFF" />
+            <KeywordList title="경쟁사 주요 키워드" keywords={compAnalysis.keywords} color="#5856D6" />
           </div>
 
           {/* Auto Insights */}
@@ -269,42 +335,95 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
   );
 };
 
-// Sub-components
+/* ─── Sub-components ─── */
 
-const RatingBar = ({ label, rating, color }: { label: string; rating: number; color: string }) => (
-  <div className="text-center">
-    <p className="text-sm text-muted-foreground truncate mb-2">{label}</p>
-    <p className="text-3xl font-bold" style={{ color }}>{rating}</p>
-    <div className="mt-2 h-3 bg-secondary rounded-full overflow-hidden">
-      <div
-        className="h-full rounded-full transition-all duration-700"
-        style={{ width: `${(rating / 5) * 100}%`, background: color, opacity: 0.8 }}
-      />
-    </div>
-    <p className="text-xs text-muted-foreground mt-1">/ 5.0</p>
-  </div>
-);
-
-const SentimentChartInner = ({ data }: { data: { name: string; value: number; color: string }[] }) => {
-  const total = data.reduce((s, d) => s + d.value, 0);
-  if (total === 0) return <p className="text-sm text-muted-foreground text-center mt-8">데이터 없음</p>;
+const RatingCard = ({ label, appName, avgRating, ratingDist, color }: {
+  label: string;
+  appName: string;
+  avgRating: number;
+  ratingDist: { rating: number; count: number }[];
+  color: string;
+}) => {
+  const max = Math.max(...ratingDist.map(d => d.count), 1);
   return (
-    <div className="flex flex-col gap-3 justify-center h-full">
-      {data.map(d => (
-        <div key={d.name} className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-          <span className="text-sm text-muted-foreground w-8">{d.name}</span>
-          <div className="flex-1 h-5 bg-secondary rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${(d.value / total) * 100}%`, background: d.color, opacity: 0.8 }}
-            />
+    <div className="glass-card p-6">
+      <h3 className="font-semibold text-base text-foreground mb-1 text-center flex items-center justify-center gap-2">
+        <Star className="w-4 h-4" /> {label}
+      </h3>
+      <p className="text-xs text-muted-foreground text-center mb-4 truncate">{appName}</p>
+      <p className="text-4xl font-bold text-center mb-4" style={{ color }}>{avgRating}</p>
+      <div className="space-y-2">
+        {ratingDist.map(d => (
+          <div key={d.rating} className="flex items-center gap-2">
+            <span className="text-xs font-medium text-foreground w-6">{d.rating}★</span>
+            <div className="flex-1 h-4 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${(d.count / max) * 100}%`,
+                  background: color,
+                  opacity: 0.75,
+                }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground w-8 text-right">{d.count}</span>
           </div>
-          <span className="text-sm font-semibold text-foreground w-10 text-right">
-            {Math.round((d.value / total) * 100)}%
-          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const DonutCard = ({ title, data }: { title: string; data: { name: string; value: number; color: string }[] }) => {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) {
+    return (
+      <div className="glass-card p-6 flex flex-col h-full">
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">{title}</h3>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">데이터 없음</p>
         </div>
-      ))}
+      </div>
+    );
+  }
+  return (
+    <div className="glass-card p-6 flex flex-col h-full">
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">{title}</h3>
+      <div className="flex-1 flex flex-row items-center justify-center gap-6">
+        <div className="w-36 h-36 flex-shrink-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
+                {data.map((entry, index) => (
+                  <Cell key={index} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(255,255,255,0.9)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: '10px',
+                  color: 'hsl(220, 15%, 20%)',
+                  fontSize: '12px',
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex flex-col gap-3">
+          {data.map(d => (
+            <div key={d.name} className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+              <span className="text-sm text-muted-foreground w-8">{d.name}</span>
+              <span className="text-sm font-semibold text-foreground">
+                {Math.round((d.value / total) * 100)}%
+              </span>
+              <span className="text-xs text-muted-foreground">({d.value})</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
