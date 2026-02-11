@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 
 interface KeywordCloudProps {
   keywords?: { text: string; weight: number }[];
@@ -10,13 +10,6 @@ const defaultKeywords = [
   { text: '편리함', weight: 82 }, { text: '콘텐츠', weight: 67 }, { text: '추천', weight: 75 },
 ];
 
-// Deterministic pseudo-random based on string hash
-const hashStr = (s: string) => {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-};
-
 const COLORS = [
   'hsl(var(--primary))',
   'hsl(210, 70%, 60%)',
@@ -24,70 +17,201 @@ const COLORS = [
   'hsl(152, 60%, 48%)',
   'hsl(38, 80%, 55%)',
   'hsl(340, 65%, 55%)',
+  'hsl(200, 75%, 55%)',
+  'hsl(120, 50%, 55%)',
 ];
 
-const KeywordCloud = ({ keywords = defaultKeywords }: KeywordCloudProps) => {
-  const maxWeight = Math.max(...keywords.map(k => k.weight), 1);
-  const minWeight = Math.min(...keywords.map(k => k.weight));
+const hashStr = (s: string) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
 
-  const items = useMemo(() => {
-    // Sort by weight descending so biggest are in the center
-    const sorted = [...keywords].sort((a, b) => b.weight - a.weight);
-    // Reorder: place highest weight items toward center of array
-    const result: typeof sorted = new Array(sorted.length);
-    let left = 0, right = sorted.length - 1;
-    for (let i = 0; i < sorted.length; i++) {
-      if (i % 2 === 0) result[Math.floor(sorted.length / 2) + left++] = sorted[i];
-      else result[Math.floor(sorted.length / 2) - right-- + sorted.length - 1] = sorted[i];
+interface PlacedWord {
+  text: string;
+  weight: number;
+  x: number;
+  y: number;
+  fontSize: number;
+  rotation: number;
+  color: string;
+  bold: boolean;
+}
+
+interface Rect {
+  x: number; y: number; w: number; h: number;
+}
+
+function rectsOverlap(a: Rect, b: Rect, padding = 4): boolean {
+  return !(a.x + a.w + padding < b.x || b.x + b.w + padding < a.x ||
+           a.y + a.h + padding < b.y || b.y + b.h + padding < a.y);
+}
+
+function getWordRect(x: number, y: number, fontSize: number, textLen: number, rotated: boolean): Rect {
+  const charW = fontSize * 0.65;
+  const w = rotated ? fontSize * 1.2 : charW * textLen;
+  const h = rotated ? charW * textLen : fontSize * 1.3;
+  return { x: x - w / 2, y: y - h / 2, w, h };
+}
+
+function layoutWords(
+  keywords: { text: string; weight: number }[],
+  containerW: number,
+  containerH: number,
+): PlacedWord[] {
+  if (containerW < 50 || containerH < 50) return [];
+
+  const sorted = [...keywords].sort((a, b) => b.weight - a.weight);
+  const maxW = sorted[0]?.weight || 1;
+  const minW = sorted[sorted.length - 1]?.weight || 0;
+  const range = maxW - minW || 1;
+
+  const placed: PlacedWord[] = [];
+  const rects: Rect[] = [];
+  const cx = containerW / 2;
+  const cy = containerH / 2;
+
+  for (let i = 0; i < sorted.length; i++) {
+    const kw = sorted[i];
+    const ratio = (kw.weight - minW) / range;
+
+    // Top 3 get huge sizes
+    let fontSize: number;
+    if (i < 3) {
+      fontSize = 28 + ratio * 28; // 28-56px (≈1.75rem - 3.5rem)
+    } else {
+      fontSize = 13 + ratio * 22; // 13-35px (≈0.8rem - 2.2rem)
     }
-    // Filter out undefined slots and return
-    return result.filter(Boolean);
-  }, [keywords]);
 
-  const getSize = (weight: number) => {
-    const ratio = maxWeight === minWeight ? 0.5 : (weight - minWeight) / (maxWeight - minWeight);
-    return 14 + ratio * 26;
-  };
+    const bold = i < 3;
+    const color = COLORS[hashStr(kw.text) % COLORS.length];
 
-  const getOpacity = (weight: number) => {
-    const ratio = maxWeight === minWeight ? 1 : (weight - minWeight) / (maxWeight - minWeight);
-    return 0.55 + ratio * 0.45;
-  };
+    // ~35% chance of vertical rotation
+    const seed = hashStr(kw.text + 'rot');
+    const rotated = seed % 100 < 35;
+    const rotation = rotated ? 90 : 0;
 
-  const getRotation = (text: string) => {
-    const h = hashStr(text);
-    const angles = [0, 0, 0, -12, 8, -6, 10, 0]; // mostly horizontal
-    return angles[h % angles.length];
-  };
+    // Spiral placement
+    let placed_ = false;
+    const spiralStep = 3;
+    const maxRadius = Math.max(containerW, containerH) * 0.6;
+
+    for (let r = 0; r < maxRadius; r += spiralStep) {
+      const angleStep = r < 1 ? 1 : Math.max(4, Math.floor(360 / (r * 0.5)));
+      for (let angle = 0; angle < 360; angle += angleStep) {
+        const rad = (angle * Math.PI) / 180;
+        // Elliptical spiral to fit container shape
+        const px = cx + r * Math.cos(rad) * (containerW / containerH);
+        const py = cy + r * Math.sin(rad);
+
+        const rect = getWordRect(px, py, fontSize, kw.text.length, rotated);
+
+        // Bounds check
+        if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > containerW || rect.y + rect.h > containerH) {
+          continue;
+        }
+
+        // Collision check
+        let collides = false;
+        for (const existing of rects) {
+          if (rectsOverlap(rect, existing, 3)) {
+            collides = true;
+            break;
+          }
+        }
+
+        if (!collides) {
+          placed.push({
+            text: kw.text,
+            weight: kw.weight,
+            x: px,
+            y: py,
+            fontSize,
+            rotation,
+            color,
+            bold,
+          });
+          rects.push(rect);
+          placed_ = true;
+          break;
+        }
+      }
+      if (placed_) break;
+    }
+
+    // Fallback: place at edge if spiral failed
+    if (!placed_) {
+      const fallbackX = cx + (hashStr(kw.text + 'fx') % 60 - 30);
+      const fallbackY = cy + (hashStr(kw.text + 'fy') % 60 - 30);
+      placed.push({
+        text: kw.text,
+        weight: kw.weight,
+        x: fallbackX,
+        y: fallbackY,
+        fontSize: Math.max(fontSize * 0.7, 12),
+        rotation,
+        color,
+        bold,
+      });
+    }
+  }
+
+  return placed;
+}
+
+const KeywordCloud = ({ keywords = defaultKeywords }: KeywordCloudProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
+
+  const updateDims = useCallback(() => {
+    if (containerRef.current) {
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      setDims(prev => (prev.w === Math.floor(width) && prev.h === Math.floor(height)) ? prev : { w: Math.floor(width), h: Math.floor(height) });
+    }
+  }, []);
+
+  useEffect(() => {
+    updateDims();
+    const ro = new ResizeObserver(updateDims);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [updateDims]);
+
+  const placedWords = useMemo(() => {
+    if (dims.w === 0 || dims.h === 0) return [];
+    return layoutWords(keywords, dims.w, dims.h);
+  }, [keywords, dims.w, dims.h]);
 
   return (
     <div className="glass-card p-6">
       <h3 className="font-display font-semibold text-lg text-foreground mb-4">주요 키워드</h3>
-      <div className="flex flex-wrap gap-x-4 gap-y-3 items-center justify-center min-h-[180px] py-4">
-        {items.map((keyword) => {
-          const size = getSize(keyword.weight);
-          const isBold = keyword.weight >= maxWeight * 0.85;
-          const color = COLORS[hashStr(keyword.text) % COLORS.length];
-          const rotation = getRotation(keyword.text);
-
-          return (
-            <span
-              key={keyword.text}
-              className="cursor-default transition-all duration-300 hover:scale-125 inline-block"
-              style={{
-                fontSize: `${size}px`,
-                fontWeight: isBold ? 800 : 500,
-                opacity: getOpacity(keyword.weight),
-                color,
-                transform: `rotate(${rotation}deg)`,
-                lineHeight: 1.2,
-              }}
-              title={`${keyword.text}: ${keyword.weight}`}
-            >
-              {keyword.text}
-            </span>
-          );
-        })}
+      <div
+        ref={containerRef}
+        className="relative overflow-hidden"
+        style={{ height: '280px' }}
+      >
+        {placedWords.map((word, idx) => (
+          <span
+            key={word.text}
+            className="absolute cursor-default select-none transition-all duration-500 ease-out hover:scale-125 hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
+            style={{
+              left: `${word.x}px`,
+              top: `${word.y}px`,
+              fontSize: `${word.fontSize}px`,
+              fontWeight: word.bold ? 800 : 500,
+              color: word.color,
+              transform: `translate(-50%, -50%) rotate(${word.rotation}deg)`,
+              lineHeight: 1.1,
+              whiteSpace: 'nowrap',
+              opacity: 0,
+              animation: `fade-in 0.4s ease-out ${idx * 0.04}s forwards`,
+              zIndex: word.bold ? 2 : 1,
+            }}
+            title={`${word.text}: ${word.weight}`}
+          >
+            {word.text}
+          </span>
+        ))}
       </div>
     </div>
   );
