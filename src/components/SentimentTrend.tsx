@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { Store } from '@/lib/api';
+import { getStoreColors } from '@/lib/storeColors';
 
 interface ReviewForTrend {
   date: string;
@@ -8,14 +10,15 @@ interface ReviewForTrend {
 
 interface SentimentTrendProps {
   reviews?: ReviewForTrend[];
+  store?: Store;
 }
 
-const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
+const SentimentTrend = ({ reviews = [], store = 'apple' }: SentimentTrendProps) => {
+  const colors = getStoreColors(store);
+
   const trendData = useMemo(() => {
     if (reviews.length === 0) return [];
-
     const bucketMap = new Map<string, { positive: number; negative: number; neutral: number }>();
-
     for (const r of reviews) {
       if (!r.date || !r.sentiment) continue;
       const d = new Date(r.date);
@@ -25,15 +28,10 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
       entry[r.sentiment]++;
       bucketMap.set(key, entry);
     }
-
     if (bucketMap.size === 0) return [];
-
     return Array.from(bucketMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, counts]) => ({
-        date: date.slice(5),
-        ...counts,
-      }));
+      .map(([date, counts]) => ({ date: date.slice(5), ...counts }));
   }, [reviews]);
 
   if (trendData.length === 0) {
@@ -55,12 +53,12 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
           <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
             <defs>
               <linearGradient id="positiveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#007AFF" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#007AFF" stopOpacity={0} />
+                <stop offset="0%" stopColor={colors.positive} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={colors.positive} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="negativeGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FF3B30" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#FF3B30" stopOpacity={0} />
+                <stop offset="0%" stopColor={colors.negative} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={colors.negative} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 92%)" vertical={false} />
@@ -78,8 +76,8 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
               }}
             />
-            <Area type="monotone" dataKey="positive" name="긍정" stroke="#007AFF" fill="url(#positiveGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
-            <Area type="monotone" dataKey="negative" name="부정" stroke="#FF3B30" fill="url(#negativeGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
+            <Area type="monotone" dataKey="positive" name="긍정" stroke={colors.positive} fill="url(#positiveGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
+            <Area type="monotone" dataKey="negative" name="부정" stroke={colors.negative} fill="url(#negativeGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

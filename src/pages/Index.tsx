@@ -15,6 +15,7 @@ import SegmentedControl from '@/components/SegmentedControl';
 import CompetitorComparison from '@/components/CompetitorComparison';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
 import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution } from '@/data/mockData';
+import { getStoreColors } from '@/lib/storeColors';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -62,10 +63,11 @@ const Index = () => {
         }
         if (analysis.sentimentDistribution) {
           const sd = analysis.sentimentDistribution;
+          const c = getStoreColors(store);
           setSentimentDist([
-            { name: '긍정', value: sd.positive || 0, color: '#007AFF' },
-            { name: '부정', value: sd.negative || 0, color: '#FF3B30' },
-            { name: '중립', value: sd.neutral || 0, color: '#8E8E93' },
+            { name: '긍정', value: sd.positive || 0, color: c.positive },
+            { name: '부정', value: sd.negative || 0, color: c.negative },
+            { name: '중립', value: sd.neutral || 0, color: c.neutral },
           ]);
         }
       }
@@ -165,10 +167,11 @@ const Index = () => {
             }
             if (analysis.sentimentDistribution) {
               const sd = analysis.sentimentDistribution;
+              const c = getStoreColors(store);
               setSentimentDist([
-                { name: '긍정', value: sd.positive || 0, color: '#007AFF' },
-                { name: '부정', value: sd.negative || 0, color: '#FF3B30' },
-                { name: '중립', value: sd.neutral || 0, color: '#8E8E93' },
+                { name: '긍정', value: sd.positive || 0, color: c.positive },
+                { name: '부정', value: sd.negative || 0, color: c.negative },
+                { name: '중립', value: sd.neutral || 0, color: c.neutral },
               ]);
             }
           }
@@ -240,10 +243,11 @@ const Index = () => {
     const pos = analyzed.filter(r => r.sentiment === 'positive').length;
     const neg = analyzed.filter(r => r.sentiment === 'negative').length;
     const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
+    const c = getStoreColors(store);
     return [
-      { name: '긍정', value: pos, color: '#007AFF' },
-      { name: '부정', value: neg, color: '#FF3B30' },
-      { name: '중립', value: neu, color: '#8E8E93' },
+      { name: '긍정', value: pos, color: c.positive },
+      { name: '부정', value: neg, color: c.negative },
+      { name: '중립', value: neu, color: c.neutral },
     ];
   }, [dateFilteredReviews, sentimentDist]);
 
@@ -364,10 +368,10 @@ const Index = () => {
             </section>
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SentimentChart data={computedSentimentDist} />
-              <RatingDistribution data={computedRatingDist} />
-              <SentimentTrend reviews={dateFilteredReviews} />
-              <KeywordBarChart keywords={computedKeywords} />
+              <SentimentChart data={computedSentimentDist} store={store} />
+              <RatingDistribution data={computedRatingDist} store={store} />
+              <SentimentTrend reviews={dateFilteredReviews} store={store} />
+              <KeywordBarChart keywords={computedKeywords} store={store} />
             </section>
 
             <section>
@@ -381,6 +385,7 @@ const Index = () => {
                   selectedSentiment={sentimentFilter}
                   onRatingChange={setRatingFilter}
                   onSentimentChange={setSentimentFilter}
+                  store={store}
                 />
               </div>
               <div className="grid gap-4">
@@ -390,7 +395,7 @@ const Index = () => {
                     <p className="text-muted-foreground">리뷰를 가져오는 중...</p>
                   </div>
                 ) : filteredReviews.length > 0 ? (
-                  filteredReviews.map(review => <ReviewCard key={review.id} review={review} />)
+                  filteredReviews.map(review => <ReviewCard key={review.id} review={review} store={store} />)
                 ) : (
                   <div className="glass-card p-12 text-center">
                     <p className="text-muted-foreground">

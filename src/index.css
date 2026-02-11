@@ -112,10 +112,10 @@
   }
 
   .star-filled {
-    color: hsl(var(--neutral));
+    color: #FFCC00;
   }
 
   .star-empty {
-    color: hsl(var(--muted-foreground));
+    color: hsl(220 10% 85%);
   }
 }
