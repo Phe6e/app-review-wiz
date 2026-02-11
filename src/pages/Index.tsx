@@ -11,10 +11,13 @@ import KeywordBarChart from '@/components/KeywordBarChart';
 import DateRangePicker from '@/components/DateRangePicker';
 import CountrySelector from '@/components/CountrySelector';
 import StatCard from '@/components/StatCard';
+import SegmentedControl from '@/components/SegmentedControl';
+import CompetitorComparison from '@/components/CompetitorComparison';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
 import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution } from '@/data/mockData';
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState(0);
   const [store, setStore] = useState<Store>('apple');
   const [country, setCountry] = useState('kr');
   const [selectedApp, setSelectedApp] = useState<AppResult | null>(null);
@@ -288,116 +291,135 @@ const Index = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Segmented Control */}
         <section className="flex justify-center">
-          <AppSearchBar store={store} country={country} onSelectApp={handleSelectApp} />
-        </section>
-
-        {selectedApp && (
-          <section className="glass-card p-6 flex items-center gap-5 animate-fade-in">
-            {selectedApp.icon ? (
-              <img src={selectedApp.icon} alt={selectedApp.name} className="w-16 h-16 rounded-2xl" />
-            ) : (
-              <span className="text-5xl">📱</span>
-            )}
-            <div>
-              <h2 className="text-xl font-display font-bold text-foreground">{selectedApp.name}</h2>
-              <p className="text-sm text-muted-foreground">{selectedApp.developer}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-neutral font-display font-semibold">⭐ {selectedApp.rating}</span>
-                <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} 리뷰</span>
-                {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">데모 데이터</span>}
-              </div>
-            </div>
-            {(loading || analyzing) && (
-              <div className="ml-auto flex items-center gap-2 text-primary">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">{analyzing ? '감성 분석 중...' : '리뷰 로딩 중...'}</span>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Date Range Picker */}
-        <section>
-          <DateRangePicker
-            startDate={dateStart}
-            endDate={dateEnd}
-            onStartDateChange={setDateStart}
-            onEndDateChange={setDateEnd}
+          <SegmentedControl
+            tabs={['내 앱 분석', '경쟁사 비교']}
+            activeIndex={activeTab}
+            onChange={setActiveTab}
           />
         </section>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
-          <StatCard icon={<Star className="w-5 h-5" />} label="평균 평점" value={String(avgRating)} />
-          <StatCard
-            icon={<TrendingUp className="w-5 h-5" />}
-            label="평점 변동 추이"
-            value={`${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%`}
-            subtext={ratingTrend.direction === 'up' ? '▲ 전월 대비 상승' : ratingTrend.direction === 'down' ? '▼ 전월 대비 하락' : '— 변동 없음'}
-          />
-          <StatCard
-            icon={<BarChart3 className="w-5 h-5" />}
-            label="리뷰 밀도"
-            value={`${reviewDensity}`}
-            subtext="최근 7일 일평균"
-          />
-        </section>
+        {activeTab === 0 ? (
+          <>
+            <section className="flex justify-center">
+              <AppSearchBar store={store} country={country} onSelectApp={handleSelectApp} />
+            </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SentimentChart data={computedSentimentDist} />
-          <RatingDistribution data={computedRatingDist} />
-          <SentimentTrend reviews={dateFilteredReviews} />
-          <KeywordBarChart keywords={computedKeywords} />
-        </section>
-
-        <section>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
-            <h3 className="text-xl font-display font-bold text-foreground">
-              최신 리뷰
-              {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}건)</span>}
-            </h3>
-            <ReviewFilters
-              selectedRating={ratingFilter}
-              selectedSentiment={sentimentFilter}
-              onRatingChange={setRatingFilter}
-              onSentimentChange={setSentimentFilter}
-            />
-          </div>
-          <div className="grid gap-4">
-            {loading ? (
-              <div className="glass-card p-12 text-center">
-                <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                <p className="text-muted-foreground">리뷰를 가져오는 중...</p>
-              </div>
-            ) : filteredReviews.length > 0 ? (
-              filteredReviews.map(review => <ReviewCard key={review.id} review={review} />)
-            ) : (
-              <div className="glass-card p-12 text-center">
-                <p className="text-muted-foreground">
-                  {reviews.length === 0 ? '앱을 검색하여 리뷰를 확인하세요.' : '해당 조건의 리뷰가 없습니다.'}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {hasNextPage && !isUsingMockData && (
-            <div className="flex justify-center mt-6">
-              <button
-                type="button"
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium disabled:opacity-50"
-              >
-                {loadingMore ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> 로딩 중...</>
+            {selectedApp && (
+              <section className="glass-card p-6 flex items-center gap-5 animate-fade-in">
+                {selectedApp.icon ? (
+                  <img src={selectedApp.icon} alt={selectedApp.name} className="w-16 h-16 rounded-2xl" />
                 ) : (
-                  <><ChevronDown className="w-4 h-4" /> 리뷰 더 보기</>
+                  <span className="text-5xl">📱</span>
                 )}
-              </button>
-            </div>
-          )}
-        </section>
+                <div>
+                  <h2 className="text-xl font-display font-bold text-foreground">{selectedApp.name}</h2>
+                  <p className="text-sm text-muted-foreground">{selectedApp.developer}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-neutral font-display font-semibold">⭐ {selectedApp.rating}</span>
+                    <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} 리뷰</span>
+                    {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">데모 데이터</span>}
+                  </div>
+                </div>
+                {(loading || analyzing) && (
+                  <div className="ml-auto flex items-center gap-2 text-primary">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">{analyzing ? '감성 분석 중...' : '리뷰 로딩 중...'}</span>
+                  </div>
+                )}
+              </section>
+            )}
+
+            <section>
+              <DateRangePicker
+                startDate={dateStart}
+                endDate={dateEnd}
+                onStartDateChange={setDateStart}
+                onEndDateChange={setDateEnd}
+              />
+            </section>
+
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
+              <StatCard icon={<Star className="w-5 h-5" />} label="평균 평점" value={String(avgRating)} />
+              <StatCard
+                icon={<TrendingUp className="w-5 h-5" />}
+                label="평점 변동 추이"
+                value={`${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%`}
+                subtext={ratingTrend.direction === 'up' ? '▲ 전월 대비 상승' : ratingTrend.direction === 'down' ? '▼ 전월 대비 하락' : '— 변동 없음'}
+              />
+              <StatCard
+                icon={<BarChart3 className="w-5 h-5" />}
+                label="리뷰 밀도"
+                value={`${reviewDensity}`}
+                subtext="최근 7일 일평균"
+              />
+            </section>
+
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SentimentChart data={computedSentimentDist} />
+              <RatingDistribution data={computedRatingDist} />
+              <SentimentTrend reviews={dateFilteredReviews} />
+              <KeywordBarChart keywords={computedKeywords} />
+            </section>
+
+            <section>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+                <h3 className="text-xl font-display font-bold text-foreground">
+                  최신 리뷰
+                  {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}건)</span>}
+                </h3>
+                <ReviewFilters
+                  selectedRating={ratingFilter}
+                  selectedSentiment={sentimentFilter}
+                  onRatingChange={setRatingFilter}
+                  onSentimentChange={setSentimentFilter}
+                />
+              </div>
+              <div className="grid gap-4">
+                {loading ? (
+                  <div className="glass-card p-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-muted-foreground">리뷰를 가져오는 중...</p>
+                  </div>
+                ) : filteredReviews.length > 0 ? (
+                  filteredReviews.map(review => <ReviewCard key={review.id} review={review} />)
+                ) : (
+                  <div className="glass-card p-12 text-center">
+                    <p className="text-muted-foreground">
+                      {reviews.length === 0 ? '앱을 검색하여 리뷰를 확인하세요.' : '해당 조건의 리뷰가 없습니다.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {hasNextPage && !isUsingMockData && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium disabled:opacity-50"
+                  >
+                    {loadingMore ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> 로딩 중...</>
+                    ) : (
+                      <><ChevronDown className="w-4 h-4" /> 리뷰 더 보기</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
+          <CompetitorComparison
+            store={store}
+            country={country}
+            myApp={selectedApp}
+            myReviews={dateFilteredReviews}
+          />
+        )}
       </main>
     </div>
   );
