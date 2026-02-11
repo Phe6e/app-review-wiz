@@ -42,6 +42,8 @@ export async function searchApps(query: string, store: Store, country = 'kr') {
   return callEdgeFunction('search-apps', { query, store, country });
 }
 
+export type Country = string;
+
 export async function fetchReviews(appId: string, store: Store, country = 'kr', page = 1) {
   return callEdgeFunction('fetch-reviews', { appId, store, country, page });
 }
