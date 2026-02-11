@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { Star, MessageSquare, TrendingUp, BarChart3, Loader2, ChevronDown } from 'lucide-react';
 import StoreSelector from '@/components/StoreSelector';
 import AppSearchBar from '@/components/AppSearchBar';
@@ -92,9 +92,13 @@ const Index = () => {
     }
   }, [store, analyzeAndUpdate]);
 
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   const handleLoadMore = useCallback(async () => {
     if (!selectedApp || loadingMore || !hasNextPage) return;
 
+    // Save scroll position before loading
+    const scrollY = window.scrollY;
     const nextPage = currentPage + 1;
     setLoadingMore(true);
 
@@ -121,6 +125,10 @@ const Index = () => {
       console.error('Load more error:', e);
     } finally {
       setLoadingMore(false);
+      // Restore scroll position after render
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
     }
   }, [selectedApp, store, currentPage, hasNextPage, loadingMore, reviews, analyzeAndUpdate]);
 
