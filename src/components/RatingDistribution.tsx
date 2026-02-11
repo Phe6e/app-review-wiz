@@ -15,7 +15,7 @@ const RatingDistribution = ({ data = defaultData }: RatingDistributionProps) => 
 
   return (
     <div className="glass-card p-6">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4">평점 분포</h3>
+      <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">평점 분포</h3>
       <div className="flex flex-col gap-3">
         {data.map(d => (
           <div key={d.rating} className="flex items-center gap-3">

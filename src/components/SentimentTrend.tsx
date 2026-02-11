@@ -40,7 +40,7 @@ const SentimentTrend = ({ reviews = [] }: SentimentTrendProps) => {
 
   return (
     <div className="glass-card p-6">
-      <h3 className="font-display font-semibold text-lg text-foreground mb-4">감성 트렌드</h3>
+      <h3 className="font-display font-semibold text-lg text-foreground mb-4 text-center">감성 트렌드</h3>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={trendData}>
