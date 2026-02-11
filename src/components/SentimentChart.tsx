@@ -5,9 +5,9 @@ interface SentimentChartProps {
 }
 
 const defaultData = [
-  { name: '긍정', value: 52, color: 'hsl(142, 71%, 45%)' },
-  { name: '부정', value: 32, color: 'hsl(4, 90%, 60%)' },
-  { name: '중립', value: 16, color: 'hsl(240, 4%, 56%)' },
+  { name: '긍정', value: 52, color: '#007AFF' },
+  { name: '부정', value: 32, color: '#FF3B30' },
+  { name: '중립', value: 16, color: '#8E8E93' },
 ];
 
 const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
@@ -31,10 +31,25 @@ const SentimentChart = ({ data = defaultData }: SentimentChartProps) => {
         <div className="w-36 h-36 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              <defs>
+                <linearGradient id="sentGradPos" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#007AFF" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#5AC8FA" stopOpacity={0.75} />
+                </linearGradient>
+                <linearGradient id="sentGradNeg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#FF3B30" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#FF6B6B" stopOpacity={0.75} />
+                </linearGradient>
+                <linearGradient id="sentGradNeu" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#8E8E93" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#AEAEB2" stopOpacity={0.7} />
+                </linearGradient>
+              </defs>
               <Pie data={data} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
-                {data.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
+                {data.map((entry, index) => {
+                  const gradId = entry.name === '긍정' ? 'url(#sentGradPos)' : entry.name === '부정' ? 'url(#sentGradNeg)' : 'url(#sentGradNeu)';
+                  return <Cell key={index} fill={gradId} />;
+                })}
               </Pie>
               <Tooltip
                 contentStyle={{

@@ -330,7 +330,10 @@ const MinimalRatingCard = ({ label, avgRating, color }: { label: string; avgRati
       <div className="h-2 bg-secondary rounded-full overflow-hidden mx-auto max-w-[200px]">
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: color, opacity: 0.8 }}
+          style={{
+            width: `${pct}%`,
+            background: `linear-gradient(90deg, ${color}99, ${color}DD)`,
+          }}
         />
       </div>
     </div>
@@ -347,6 +350,13 @@ const DonutCard = ({ title, data }: { title: string; data: { name: string; value
       </div>
     );
   }
+  // Map colors to gradient IDs
+  const gradients = data.map((d, i) => {
+    const id = `compDonut${title.replace(/\s/g, '')}_${i}`;
+    const lighter = d.color === '#007AFF' ? '#5AC8FA' : d.color === '#FF3B30' ? '#FF6B6B' : d.color === '#5856D6' ? '#7B79E0' : d.color === '#FF9500' ? '#FFB340' : '#AEAEB2';
+    return { id, base: d.color, lighter };
+  });
+
   return (
     <div className="glass-card p-6 flex flex-col h-full">
       <h3 className="font-semibold text-base text-foreground mb-4 text-center">{title}</h3>
@@ -354,10 +364,18 @@ const DonutCard = ({ title, data }: { title: string; data: { name: string; value
         <div className="w-36 h-36 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
+              <defs>
+                {gradients.map(g => (
+                  <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor={g.base} stopOpacity={0.95} />
+                    <stop offset="100%" stopColor={g.lighter} stopOpacity={0.75} />
+                  </linearGradient>
+                ))}
+              </defs>
               <Pie data={data} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
-                {data.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+                {data.map((_, idx) => <Cell key={idx} fill={`url(#${gradients[idx].id})`} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', fontSize: '12px' }} />
+              <Tooltip contentStyle={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
