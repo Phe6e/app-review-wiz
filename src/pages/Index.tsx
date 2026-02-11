@@ -31,7 +31,7 @@ const Index = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [dateStart, setDateStart] = useState<Date | undefined>(undefined);
-  const [dateEnd, setDateEnd] = useState<Date | undefined>(undefined);
+  const [dateEnd, setDateEnd] = useState<Date | undefined>(() => new Date());
 
   // Date-filtered reviews
   const dateFilteredReviews = useMemo(() => {
