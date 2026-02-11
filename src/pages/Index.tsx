@@ -9,12 +9,14 @@ import RatingDistribution from '@/components/RatingDistribution';
 import SentimentTrend from '@/components/SentimentTrend';
 import KeywordBarChart from '@/components/KeywordBarChart';
 import DateRangePicker from '@/components/DateRangePicker';
+import CountrySelector from '@/components/CountrySelector';
 import StatCard from '@/components/StatCard';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
 import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution } from '@/data/mockData';
 
 const Index = () => {
   const [store, setStore] = useState<Store>('apple');
+  const [country, setCountry] = useState('kr');
   const [selectedApp, setSelectedApp] = useState<AppResult | null>(null);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [sentimentFilter, setSentimentFilter] = useState<Sentiment | null>(null);
@@ -82,7 +84,7 @@ const Index = () => {
     setDateEnd(undefined);
 
     try {
-      const result = await fetchReviews(app.id, store, 'kr', 1);
+      const result = await fetchReviews(app.id, store, country, 1);
 
       if (result.success && result.reviews && result.reviews.length > 0) {
         setReviews(result.reviews);
@@ -110,7 +112,7 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  }, [store, analyzeAndUpdate]);
+  }, [store, country, analyzeAndUpdate]);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +126,7 @@ const Index = () => {
     setLoadingMore(true);
 
     try {
-      const result = await fetchReviews(selectedApp.id, store, 'kr', nextPage);
+      const result = await fetchReviews(selectedApp.id, store, country, nextPage);
 
       if (result.success && result.reviews && result.reviews.length > 0) {
         const newReviews = result.reviews;
@@ -278,13 +280,16 @@ const Index = () => {
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">앱 리뷰를 검색하고 분석하세요</p>
           </div>
-          <StoreSelector selected={store} onSelect={s => { setStore(s); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+          <div className="flex items-center gap-3">
+            <StoreSelector selected={store} onSelect={s => { setStore(s); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+            <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         <section className="flex justify-center">
-          <AppSearchBar store={store} onSelectApp={handleSelectApp} />
+          <AppSearchBar store={store} country={country} onSelectApp={handleSelectApp} />
         </section>
 
         {selectedApp && (

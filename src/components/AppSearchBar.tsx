@@ -4,10 +4,11 @@ import { Store, AppResult, searchApps } from '@/lib/api';
 
 interface AppSearchBarProps {
   store: Store;
+  country?: string;
   onSelectApp: (app: AppResult) => void;
 }
 
-const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
+const AppSearchBar = ({ store, country = 'kr', onSelectApp }: AppSearchBarProps) => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<AppResult[]>([]);
@@ -22,7 +23,7 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await searchApps(query, store);
+        const data = await searchApps(query, store, country);
         if (data.success) {
           setSuggestions(data.apps || []);
         }
@@ -34,7 +35,7 @@ const AppSearchBar = ({ store, onSelectApp }: AppSearchBarProps) => {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [query, store]);
+  }, [query, store, country]);
 
   return (
     <div className="relative w-full max-w-2xl">
