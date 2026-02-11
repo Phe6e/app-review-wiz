@@ -17,11 +17,11 @@ const KeywordRanking = ({ keywords = [], onKeywordClick, activeKeyword }: Keywor
     const pos = keywords
       .filter(k => k.sentiment === 'positive')
       .sort((a, b) => b.weight - a.weight)
-      .slice(0, 10);
+      .slice(0, 5);
     const neg = keywords
       .filter(k => k.sentiment === 'negative')
       .sort((a, b) => b.weight - a.weight)
-      .slice(0, 10);
+      .slice(0, 5);
     return { positive: pos, negative: neg };
   }, [keywords]);
 
@@ -72,7 +72,7 @@ const KeywordRanking = ({ keywords = [], onKeywordClick, activeKeyword }: Keywor
   return (
     <div className="glass-card p-6 lg:col-span-2">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display font-semibold text-lg text-foreground">주요 키워드 TOP 10</h3>
+        <h3 className="font-display font-semibold text-lg text-foreground">주요 키워드 TOP 5</h3>
         {activeKeyword && (
           <button
             onClick={() => onKeywordClick?.('')}

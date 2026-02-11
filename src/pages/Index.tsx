@@ -312,10 +312,13 @@ const Index = () => {
           />
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <SentimentChart data={computedSentimentDist} />
-          <RatingDistribution data={computedRatingDist} />
           <SentimentTrend reviews={dateFilteredReviews} />
+          <RatingDistribution data={computedRatingDist} />
+        </section>
+
+        <section>
           <KeywordRanking
             keywords={keywords}
             onKeywordClick={handleKeywordClick}
