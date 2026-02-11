@@ -29,21 +29,25 @@ const RatingDistribution = ({ data = defaultData }: RatingDistributionProps) => 
     <div className="glass-card p-6 flex flex-col h-full">
       <h3 className="font-semibold text-base text-foreground mb-4 text-center">평점 분포</h3>
       <div className="flex-1 flex flex-col justify-center gap-3">
-        {data.map(d => (
-          <div key={d.rating} className="flex items-center gap-3">
-            <span className="text-sm font-medium text-foreground w-8">{d.rating}★</span>
-            <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
-                style={{
-                  width: `${(d.count / max) * 100}%`,
-                  background: d.rating >= 4 ? 'hsl(152, 60%, 48%)' : d.rating === 3 ? 'hsl(38, 92%, 55%)' : 'hsl(0, 72%, 55%)',
-                }}
-              />
+        {data.map(d => {
+          const barColor = d.rating >= 4
+            ? 'linear-gradient(90deg, rgba(0,122,255,0.6), rgba(0,122,255,0.85))'
+            : d.rating === 3
+              ? 'linear-gradient(90deg, rgba(142,142,147,0.5), rgba(142,142,147,0.8))'
+              : 'linear-gradient(90deg, rgba(255,59,48,0.6), rgba(255,59,48,0.85))';
+          return (
+            <div key={d.rating} className="flex items-center gap-3">
+              <span className="text-sm font-medium text-foreground w-8">{d.rating}★</span>
+              <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${(d.count / max) * 100}%`, background: barColor }}
+                />
+              </div>
+              <span className="text-sm text-muted-foreground w-14 text-right">{d.count.toLocaleString()}</span>
             </div>
-            <span className="text-sm text-muted-foreground w-14 text-right">{d.count.toLocaleString()}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
