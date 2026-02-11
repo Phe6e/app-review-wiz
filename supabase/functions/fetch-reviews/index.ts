@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { appId, store, country = 'kr', count = 50 } = await req.json();
+    const { appId, store, country = 'kr', page = 1 } = await req.json();
 
     if (!appId) {
       return new Response(
@@ -18,13 +18,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    let reviews = [];
+    let reviews: any[] = [];
+    let hasNextPage = false;
 
     if (store === 'apple') {
-      // Apple App Store RSS feed - publicly available
-      const url = `https://itunes.apple.com/${country}/rss/customerreviews/id=${appId}/sortBy=mostRecent/json`;
+      // Apple App Store RSS feed supports page parameter (1-10)
+      const pageNum = Math.max(1, Math.min(page, 10));
+      const url = `https://itunes.apple.com/${country}/rss/customerreviews/page=${pageNum}/id=${appId}/sortBy=mostRecent/json`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`Apple API returned ${response.status}`);
       }
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
       reviews = entries
         .filter((entry: any) => entry['im:rating'])
         .map((entry: any, index: number) => ({
-          id: `apple-${index}`,
+          id: `apple-p${pageNum}-${index}`,
           author: entry.author?.name?.label || '익명',
           rating: parseInt(entry['im:rating']?.label || '0'),
           title: entry.title?.label || '',
@@ -43,25 +45,16 @@ Deno.serve(async (req) => {
           date: entry.updated?.label?.split('T')[0] || '',
         }));
 
-    } else {
-      // Google Play - use the public sort=2 (newest) endpoint
-      const url = `https://store.rg-adguard.net/api/playReviews?id=${encodeURIComponent(appId)}&lang=${country}&num=${count}`;
-      
-      // Fallback: try a simpler approach using Google Play's web page
-      // Since there's no official API, we return a message suggesting the user
-      // use a scraping service or provide their own API key
-      
-      // For demo purposes, we'll try the iTunes-style approach with a different endpoint
-      const response = await fetch(
-        `https://itunes.apple.com/lookup?bundleId=${encodeURIComponent(appId)}&country=${country}`
-      );
+      // Apple RSS supports up to 10 pages; if we got results, there might be more
+      hasNextPage = reviews.length > 0 && pageNum < 10;
 
-      // Google Play doesn't have a public review API like Apple
-      // We'll return a structured error with guidance
+    } else {
       return new Response(
         JSON.stringify({
           success: true,
           reviews: [],
+          hasNextPage: false,
+          page: 1,
           message: 'Google Play 리뷰는 현재 공개 API가 없습니다. Apple App Store 리뷰를 이용해주세요.',
           store: 'google',
         }),
@@ -70,7 +63,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, reviews, store }),
+      JSON.stringify({ success: true, reviews, store, page, hasNextPage }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Star, MessageSquare, TrendingUp, BarChart3, Loader2 } from 'lucide-react';
+import { Star, MessageSquare, TrendingUp, BarChart3, Loader2, ChevronDown } from 'lucide-react';
 import StoreSelector from '@/components/StoreSelector';
 import AppSearchBar from '@/components/AppSearchBar';
 import ReviewCard from '@/components/ReviewCard';
@@ -24,50 +24,59 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [isUsingMockData, setIsUsingMockData] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const analyzeAndUpdate = useCallback(async (allReviews: ReviewResult[]) => {
+    setAnalyzing(true);
+    try {
+      const analysis = await analyzeReviews(allReviews);
+      if (analysis.success) {
+        setReviews(analysis.reviews);
+        if (analysis.keywords?.length > 0) {
+          setKeywords(analysis.keywords);
+        }
+        if (analysis.sentimentDistribution) {
+          const sd = analysis.sentimentDistribution;
+          setSentimentDist([
+            { name: '긍정', value: sd.positive || 0, color: 'hsl(152, 60%, 48%)' },
+            { name: '부정', value: sd.negative || 0, color: 'hsl(0, 72%, 55%)' },
+            { name: '중립', value: sd.neutral || 0, color: 'hsl(38, 92%, 55%)' },
+          ]);
+        }
+      }
+    } catch (e) {
+      console.error('Analysis error:', e);
+    } finally {
+      setAnalyzing(false);
+    }
+  }, []);
 
   const handleSelectApp = useCallback(async (app: AppResult) => {
     setSelectedApp(app);
     setLoading(true);
     setIsUsingMockData(false);
+    setCurrentPage(1);
+    setHasNextPage(false);
+    setReviews([]);
 
     try {
-      const result = await fetchReviews(app.id, store);
-      
+      const result = await fetchReviews(app.id, store, 'kr', 1);
+
       if (result.success && result.reviews && result.reviews.length > 0) {
         setReviews(result.reviews);
-        
-        // Calculate rating distribution from real data
+        setHasNextPage(result.hasNextPage || false);
+        setCurrentPage(1);
+
         const dist = [5, 4, 3, 2, 1].map(r => ({
           rating: r,
           count: result.reviews.filter((rev: ReviewResult) => rev.rating === r).length,
         }));
         setRatingDist(dist);
 
-        // Analyze sentiment with AI
-        setAnalyzing(true);
-        try {
-          const analysis = await analyzeReviews(result.reviews);
-          if (analysis.success) {
-            setReviews(analysis.reviews);
-            if (analysis.keywords?.length > 0) {
-              setKeywords(analysis.keywords);
-            }
-            if (analysis.sentimentDistribution) {
-              const sd = analysis.sentimentDistribution;
-              setSentimentDist([
-                { name: '긍정', value: sd.positive || 0, color: 'hsl(152, 60%, 48%)' },
-                { name: '부정', value: sd.negative || 0, color: 'hsl(0, 72%, 55%)' },
-                { name: '중립', value: sd.neutral || 0, color: 'hsl(38, 92%, 55%)' },
-              ]);
-            }
-          }
-        } catch (e) {
-          console.error('Analysis error:', e);
-        } finally {
-          setAnalyzing(false);
-        }
+        await analyzeAndUpdate(result.reviews);
       } else {
-        // Fallback to mock data
         setIsUsingMockData(true);
         setReviews(mockReviews as unknown as ReviewResult[]);
         setRatingDist(ratingDistribution);
@@ -81,7 +90,39 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  }, [store]);
+  }, [store, analyzeAndUpdate]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!selectedApp || loadingMore || !hasNextPage) return;
+
+    const nextPage = currentPage + 1;
+    setLoadingMore(true);
+
+    try {
+      const result = await fetchReviews(selectedApp.id, store, 'kr', nextPage);
+
+      if (result.success && result.reviews && result.reviews.length > 0) {
+        const allReviews = [...reviews, ...result.reviews];
+        setReviews(allReviews);
+        setCurrentPage(nextPage);
+        setHasNextPage(result.hasNextPage || false);
+
+        const dist = [5, 4, 3, 2, 1].map(r => ({
+          rating: r,
+          count: allReviews.filter((rev: ReviewResult) => rev.rating === r).length,
+        }));
+        setRatingDist(dist);
+
+        await analyzeAndUpdate(allReviews);
+      } else {
+        setHasNextPage(false);
+      }
+    } catch (e) {
+      console.error('Load more error:', e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [selectedApp, store, currentPage, hasNextPage, loadingMore, reviews, analyzeAndUpdate]);
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
@@ -189,6 +230,22 @@ const Index = () => {
               </div>
             )}
           </div>
+
+          {hasNextPage && !isUsingMockData && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium disabled:opacity-50"
+              >
+                {loadingMore ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> 로딩 중...</>
+                ) : (
+                  <><ChevronDown className="w-4 h-4" /> 리뷰 더 보기</>
+                )}
+              </button>
+            </div>
+          )}
         </section>
       </main>
     </div>
