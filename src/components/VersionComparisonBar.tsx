@@ -152,10 +152,10 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
   );
 
   const IssueSection = () => painPoints.length > 0 ? (
-    <div className="flex items-start gap-1.5 min-w-0 flex-wrap">
+    <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
       <div className="flex items-center gap-1 shrink-0">
         <AlertTriangle className="w-3.5 h-3.5" style={{ color: colors.negative }} />
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap">주요 이슈</span>
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap leading-none">주요 이슈</span>
       </div>
       <div className="flex items-center gap-1 flex-wrap min-w-0">
         {painPoints.map(pp => (
