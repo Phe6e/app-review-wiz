@@ -7,10 +7,10 @@ interface StoreSelectorProps {
 
 const StoreSelector = ({ selected, onSelect }: StoreSelectorProps) => {
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2 sm:gap-3 justify-center w-full sm:w-auto">
       <button
         onClick={() => onSelect('google')}
-        className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-6 sm:py-3 rounded-xl font-display font-medium text-xs sm:text-base transition-all duration-300 ${
+        className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-3 px-2 py-2 sm:px-6 sm:py-3 rounded-xl font-display font-medium text-[11px] sm:text-base transition-all duration-300 ${
           selected === 'google'
             ? 'bg-primary text-primary-foreground glow'
             : 'glass-card text-muted-foreground hover:text-foreground hover:border-primary/30'
@@ -23,7 +23,7 @@ const StoreSelector = ({ selected, onSelect }: StoreSelectorProps) => {
       </button>
       <button
         onClick={() => onSelect('apple')}
-        className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-6 sm:py-3 rounded-xl font-display font-medium text-xs sm:text-base transition-all duration-300 ${
+        className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-3 px-2 py-2 sm:px-6 sm:py-3 rounded-xl font-display font-medium text-[11px] sm:text-base transition-all duration-300 ${
           selected === 'apple'
             ? 'bg-primary text-primary-foreground glow'
             : 'glass-card text-muted-foreground hover:text-foreground hover:border-primary/30'
