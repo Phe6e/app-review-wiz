@@ -3,6 +3,7 @@ import { ArrowUp, ArrowDown, Minus, AlertTriangle, Info } from 'lucide-react';
 import { ReviewResult, Store } from '@/lib/api';
 import { getStoreColors } from '@/lib/storeColors';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface KeywordItem {
   text: string;
@@ -28,10 +29,8 @@ const trackVersionEvent = (eventName: string, props: Record<string, unknown>) =>
 const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews = [] }: Props) => {
   const colors = getStoreColors(store);
 
-  // Merge reviews + backgroundReviews for version analysis only
   const allVersionReviews = useMemo(() => {
     const combined = [...reviews, ...backgroundReviews];
-    // Deduplicate by id
     const seen = new Set<string>();
     return combined.filter(r => {
       if (seen.has(r.id)) return false;
@@ -97,7 +96,6 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     return { version: ver, count: vReviews.length, avg, posRate, negRate };
   }, [allVersionReviews, versions]);
 
-  // Pain points from latest version negative reviews - TOP 5
   const painPoints = useMemo(() => {
     const latestVer = vB || (versions.length === 1 ? versions[0] : '');
     if (!latestVer) return keywords.filter(k => k.sentiment === 'negative').sort((a, b) => b.weight - a.weight).slice(0, 5);
@@ -129,7 +127,8 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     });
   }, [store, vB, versions]);
 
-  if (versions.length === 0) return null;
+  const hasData = reviews.length > 0;
+  const hasVersionData = versions.length > 0;
 
   const Arrow = ({ val }: { val: number }) => {
     if (val > 0) return <ArrowUp className="w-3 h-3" style={{ color: colors.positive }} />;
@@ -146,23 +145,25 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
   };
 
   const MetricChip = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/20 backdrop-blur-sm border border-white/30">
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/20 backdrop-blur-sm border border-white/30">
       <span className="text-[10px] text-muted-foreground leading-none">{label}</span>
       {children}
     </div>
   );
 
   const IssueSection = () => painPoints.length > 0 ? (
-    <div className="flex items-center gap-1.5 min-w-0">
-      <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: colors.negative }} />
-      <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">주요 이슈</span>
-      <div className="flex items-center gap-1 min-w-0">
+    <div className="flex items-start gap-1.5 min-w-0 flex-wrap">
+      <div className="flex items-center gap-1 shrink-0">
+        <AlertTriangle className="w-3.5 h-3.5" style={{ color: colors.negative }} />
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">주요 이슈</span>
+      </div>
+      <div className="flex items-center gap-1 flex-wrap min-w-0">
         {painPoints.map(pp => (
           <button
             key={pp.text}
             type="button"
             onClick={() => handleBadgeClick(pp.text, pp.weight)}
-            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-md border cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap"
+            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-md border cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap max-w-full overflow-hidden text-ellipsis"
             style={{
               background: `${colors.negative}10`,
               borderColor: `${colors.negative}20`,
@@ -180,16 +181,55 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     </div>
   );
 
+  // Empty state: no data loaded yet
+  if (!hasData) {
+    return (
+      <div className="glass-card px-4 py-3 sm:px-4 sm:py-2.5 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="font-display font-semibold text-xs text-muted-foreground">버전별 비교</span>
+          </div>
+          <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
+          <Separator orientation="horizontal" className="sm:hidden opacity-30" />
+          <div className="flex items-center gap-2 flex-wrap flex-1">
+            <Skeleton className="h-5 w-16 rounded-md" />
+            <Skeleton className="h-5 w-14 rounded-md" />
+            <Skeleton className="h-5 w-14 rounded-md" />
+            <span className="text-[11px] text-muted-foreground">앱을 검색하면 버전별 비교 데이터가 표시됩니다</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Data loaded but no version info extracted yet
+  if (!hasVersionData) {
+    return (
+      <div className="glass-card px-4 py-3 sm:px-4 sm:py-2.5 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="font-display font-semibold text-xs text-muted-foreground">버전별 비교</span>
+          </div>
+          <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
+          <Separator orientation="horizontal" className="sm:hidden opacity-30" />
+          <span className="text-[11px] text-muted-foreground">버전 정보가 포함된 리뷰가 없습니다</span>
+        </div>
+      </div>
+    );
+  }
+
   // Single version summary mode
   if (versions.length === 1 && singleVersionStats) {
     return (
-      <div className="glass-card px-4 py-2.5 animate-fade-in">
-        <div className="flex items-center gap-3">
+      <div className="glass-card px-3 py-2.5 sm:px-4 sm:py-2.5 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           {/* Left: metrics */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 shrink-0">
               <Info className="w-3 h-3 text-muted-foreground" />
-              <span className="font-display font-semibold text-xs text-foreground">v{singleVersionStats.version}</span>
+              <span className="font-display font-semibold text-xs text-foreground truncate max-w-[120px]">v{singleVersionStats.version}</span>
               <span className="text-[10px] text-muted-foreground">({singleVersionStats.count}건)</span>
             </div>
             <MetricChip label="평균">
@@ -204,25 +244,46 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
           </div>
 
           {/* Center divider */}
-          <Separator orientation="vertical" className="h-6 opacity-30" />
+          <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
+          <Separator orientation="horizontal" className="sm:hidden opacity-30" />
 
           {/* Right: issues */}
-          <IssueSection />
+          <div className="min-w-0 flex-1">
+            <IssueSection />
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <div className="glass-card px-4 py-3 sm:px-4 sm:py-2.5 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="font-display font-semibold text-xs text-muted-foreground">버전별 비교</span>
+          </div>
+          <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
+          <Separator orientation="horizontal" className="sm:hidden opacity-30" />
+          <div className="flex items-center gap-2 flex-wrap flex-1">
+            <Skeleton className="h-5 w-16 rounded-md animate-pulse" />
+            <Skeleton className="h-5 w-14 rounded-md animate-pulse" />
+            <span className="text-[11px] text-muted-foreground">버전 데이터를 분석 중입니다...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="glass-card px-4 py-2.5 animate-fade-in">
-      <div className="flex items-center gap-3">
+    <div className="glass-card px-3 py-2.5 sm:px-4 sm:py-2.5 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
         {/* Left: version label + metrics */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="font-display font-semibold text-xs text-foreground">버전 비교</span>
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+            <span className="font-display font-semibold text-xs text-foreground whitespace-nowrap">버전 비교</span>
+            <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
               v{stats.vA}({stats.countA}) → v{stats.vB}({stats.countB})
             </span>
           </div>
@@ -247,10 +308,13 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
         </div>
 
         {/* Center divider */}
-        <Separator orientation="vertical" className="h-6 opacity-30" />
+        <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
+        <Separator orientation="horizontal" className="sm:hidden opacity-30" />
 
-        {/* Right: issues TOP 3 */}
-        <IssueSection />
+        {/* Right: issues TOP 5 */}
+        <div className="min-w-0 flex-1">
+          <IssueSection />
+        </div>
       </div>
     </div>
   );
