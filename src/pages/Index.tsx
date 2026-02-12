@@ -13,9 +13,12 @@ import CountrySelector from '@/components/CountrySelector';
 import StatCard from '@/components/StatCard';
 import SegmentedControl from '@/components/SegmentedControl';
 import CompetitorComparison from '@/components/CompetitorComparison';
+import ChurnWarningWidget from '@/components/ChurnWarningWidget';
+import VersionComparisonBar from '@/components/VersionComparisonBar';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
 import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution } from '@/data/mockData';
 import { getStoreColors } from '@/lib/storeColors';
+import { detectChurnWarnings, ChurnWarningUser } from '@/lib/churnDetection';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -190,11 +193,24 @@ const Index = () => {
     }
   }, [selectedApp, store, currentPage, hasNextPage, loadingMore]);
 
+  // Churn detection
+  const churnData = useMemo(() => {
+    return detectChurnWarnings([...dateFilteredReviews]);
+  }, [dateFilteredReviews]);
+
+  const churnUsers = churnData.churnUsers;
+
   const filteredReviews = useMemo(() => {
-    return dateFilteredReviews.filter(r => {
+    const filtered = dateFilteredReviews.filter(r => {
       if (ratingFilter && r.rating !== ratingFilter) return false;
       if (sentimentFilter && r.sentiment !== sentimentFilter) return false;
       return true;
+    });
+    // Sort churn warnings to top
+    return filtered.sort((a, b) => {
+      if (a.isChurnWarning && !b.isChurnWarning) return -1;
+      if (!a.isChurnWarning && b.isChurnWarning) return 1;
+      return 0;
     });
   }, [dateFilteredReviews, ratingFilter, sentimentFilter]);
 
@@ -372,6 +388,19 @@ const Index = () => {
                 value={`${reviewDensity}`}
                 subtext="최근 7일 일평균"
               />
+            </section>
+
+            {/* Churn Warning Widget & Version Comparison */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChurnWarningWidget
+                users={churnUsers}
+                store={store}
+                onClickUser={(reviewId) => {
+                  const el = document.getElementById(`review-${reviewId}`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+              />
+              <VersionComparisonBar reviews={dateFilteredReviews} store={store} />
             </section>
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">

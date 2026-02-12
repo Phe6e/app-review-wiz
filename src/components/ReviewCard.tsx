@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { ThumbsUp, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { ReviewResult, Store } from '@/lib/api';
 import { getStoreColors } from '@/lib/storeColors';
 
@@ -23,8 +23,28 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
 
   const sentimentLabels = { positive: '긍정', negative: '부정', neutral: '중립' };
 
+  const isChurn = review.isChurnWarning;
+
   return (
-    <div className="glass-card p-5 animate-fade-in hover:border-primary/20 transition-all duration-300">
+    <div
+      id={`review-${review.id}`}
+      className={`glass-card p-5 animate-fade-in transition-all duration-300 ${
+        isChurn
+          ? 'border-destructive/30 shadow-[0_0_20px_hsl(var(--destructive)/0.12)]'
+          : 'hover:border-primary/20'
+      }`}
+    >
+      {/* Churn warning banner */}
+      {isChurn && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl"
+          style={{ backgroundColor: `${colors.negative}14` }}>
+          <AlertTriangle className="w-4 h-4" style={{ color: colors.negative }} />
+          <span className="text-xs font-semibold" style={{ color: colors.negative }}>
+            ⚠️ 이탈 주의 유저
+          </span>
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -41,6 +61,11 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
           <div className="flex items-center gap-3">
             <StarRating rating={review.rating} />
             <span className="text-xs text-muted-foreground">{review.date}</span>
+            {review.version && (
+              <span className="text-xs px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground">
+                v{review.version}
+              </span>
+            )}
           </div>
         </div>
         {review.helpful !== undefined && (
@@ -56,14 +81,31 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
         {isLong && !expanded ? review.content.slice(0, 80) + '...' : review.content}
       </p>
 
-      {isLong && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 mt-2 text-xs text-primary hover:text-primary/80 transition-colors"
-        >
-          {expanded ? <><ChevronUp className="w-3 h-3" /> 접기</> : <><ChevronDown className="w-3 h-3" /> 더 보기</>}
-        </button>
-      )}
+      <div className="flex items-center gap-2 mt-3 flex-wrap">
+        {/* AI Summary badge */}
+        {review.aiSummary && (
+          <span
+            className="text-[11px] px-2.5 py-1 rounded-full font-medium backdrop-blur-sm border border-white/30"
+            style={{
+              backgroundColor: review.sentiment === 'negative' ? `${colors.negative}18` :
+                review.sentiment === 'positive' ? `${colors.positive}18` : `${colors.neutral}18`,
+              color: review.sentiment === 'negative' ? colors.negative :
+                review.sentiment === 'positive' ? colors.positive : colors.neutral,
+            }}
+          >
+            {review.aiSummary}
+          </span>
+        )}
+
+        {isLong && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            {expanded ? <><ChevronUp className="w-3 h-3" /> 접기</> : <><ChevronDown className="w-3 h-3" /> 더 보기</>}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

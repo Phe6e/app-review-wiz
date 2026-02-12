@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
           title: entry.title?.label || '',
           content: entry.content?.label || '',
           date: entry.updated?.label?.split('T')[0] || '',
+          version: entry['im:version']?.label || '',
         }));
 
       // Apple RSS supports up to 10 pages; if we got results, there might be more
