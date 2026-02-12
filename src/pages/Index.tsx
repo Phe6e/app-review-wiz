@@ -99,23 +99,27 @@ const Index = () => {
         setHasNextPage(result.hasNextPage || false);
         setCurrentPage(1);
 
-        // Smart fetching: check if we need previous version data
+      // Target Version Smart Scan: scan loaded data for v-Previous
         const versionSet = new Set<string>();
         for (const r of allReviews) {
           if (r.version) versionSet.add(r.version);
         }
 
-        // If only 1 version found and there might be more pages, fetch page 2 for comparison
+        // Only fetch additional page if no second version found in current dataset
         if (versionSet.size <= 1 && result.hasNextPage) {
           try {
             const page2 = await fetchReviews(app.id, store, country, 2);
             if (page2.success && page2.reviews?.length > 0) {
+              // Re-scan for new versions in page 2
+              for (const r of page2.reviews) {
+                if (r.version) versionSet.add(r.version);
+              }
               allReviews = [...allReviews, ...page2.reviews];
               setCurrentPage(2);
               setHasNextPage(page2.hasNextPage || false);
             }
           } catch (e) {
-            console.error('Smart fetch page 2 error:', e);
+            console.error('Version scan fetch error:', e);
           }
         }
 
