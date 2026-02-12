@@ -311,7 +311,7 @@ const Index = () => {
         {/* Segmented Control */}
         <section className="flex justify-center">
           <SegmentedControl
-            tabs={['내 앱 분석', '경쟁사 비교']}
+            tabs={['앱 분석', '앱 비교']}
             activeIndex={activeTab}
             onChange={setActiveTab}
           />
