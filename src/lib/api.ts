@@ -36,6 +36,9 @@ export interface ReviewResult {
   sentiment?: 'positive' | 'negative' | 'neutral';
   keywords?: string[];
   helpful?: number;
+  version?: string;
+  aiSummary?: string;
+  isChurnWarning?: boolean;
 }
 
 export async function searchApps(query: string, store: Store, country = 'kr') {

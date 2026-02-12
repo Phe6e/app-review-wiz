@@ -20,9 +20,10 @@ async function analyzeBatch(batch: any[], apiKey: string): Promise<any[]> {
           content: `You are a sentiment analysis engine for app reviews. For each review, determine:
 1. sentiment: "positive", "negative", or "neutral"
 2. keywords: array of 1-3 key topics mentioned
+3. aiSummary: a concise 2-4 word summary in Korean in [state + subject] format (e.g. "불안정한 결제", "신속한 로딩", "빈번한 크래시", "편리한 UI")
 
 Return ONLY valid JSON array like:
-[{"index": 0, "sentiment": "positive", "keywords": ["디자인", "UI"]}, ...]
+[{"index": 0, "sentiment": "positive", "keywords": ["디자인", "UI"], "aiSummary": "편리한 UI"}, ...]
 
 No explanation, just JSON.`
         },
@@ -56,6 +57,7 @@ No explanation, just JSON.`
       ...review,
       sentiment: analysis?.sentiment || (review.rating >= 4 ? 'positive' : review.rating <= 2 ? 'negative' : 'neutral'),
       keywords: analysis?.keywords || [],
+      aiSummary: analysis?.aiSummary || '',
     };
   });
 }
