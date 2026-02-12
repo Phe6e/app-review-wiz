@@ -39,6 +39,7 @@ const Index = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [dateStart, setDateStart] = useState<Date | undefined>(undefined);
   const [dateEnd, setDateEnd] = useState<Date | undefined>(() => new Date());
+  const [backgroundVersionReviews, setBackgroundVersionReviews] = useState<ReviewResult[]>([]);
 
   // Date-filtered reviews
   const dateFilteredReviews = useMemo(() => {
@@ -90,6 +91,7 @@ const Index = () => {
     setReviews([]);
     setDateStart(undefined);
     setDateEnd(undefined);
+    setBackgroundVersionReviews([]);
 
     try {
       const result = await fetchReviews(app.id, store, country, 1);
@@ -110,7 +112,6 @@ const Index = () => {
           try {
             const page2 = await fetchReviews(app.id, store, country, 2);
             if (page2.success && page2.reviews?.length > 0) {
-              // Re-scan for new versions in page 2
               for (const r of page2.reviews) {
                 if (r.version) versionSet.add(r.version);
               }
@@ -121,6 +122,33 @@ const Index = () => {
           } catch (e) {
             console.error('Version scan fetch error:', e);
           }
+        }
+
+        // Background Version Match: if still only 1 version, fetch more pages in background
+        // These extra reviews are NOT added to the main review list - only used for version comparison
+        if (versionSet.size <= 1) {
+          const bgFetch = async () => {
+            let bgPage = (versionSet.size <= 1 && result.hasNextPage) ? 3 : 2;
+            const maxBgPages = bgPage + 3; // try up to 4 additional pages
+            let bgReviews: ReviewResult[] = [];
+            while (bgPage <= maxBgPages) {
+              try {
+                const bgResult = await fetchReviews(app.id, store, country, bgPage);
+                if (!bgResult.success || !bgResult.reviews?.length) break;
+                bgReviews = [...bgReviews, ...bgResult.reviews];
+                for (const r of bgResult.reviews) {
+                  if (r.version) versionSet.add(r.version);
+                }
+                if (versionSet.size > 1) break; // found previous version
+                if (!bgResult.hasNextPage) break;
+                bgPage++;
+              } catch { break; }
+            }
+            if (bgReviews.length > 0) {
+              setBackgroundVersionReviews(bgReviews);
+            }
+          };
+          bgFetch(); // fire-and-forget background fetch
         }
 
         setReviews(allReviews);
@@ -437,7 +465,7 @@ const Index = () => {
 
             {/* Version Comparison - below charts */}
             <section>
-              <VersionComparisonBar reviews={dateFilteredReviews} store={store} keywords={computedKeywords} />
+              <VersionComparisonBar reviews={dateFilteredReviews} store={store} keywords={computedKeywords} backgroundReviews={backgroundVersionReviews} />
             </section>
 
             <section>
