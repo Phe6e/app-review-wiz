@@ -97,10 +97,10 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     return { version: ver, count: vReviews.length, avg, posRate, negRate };
   }, [allVersionReviews, versions]);
 
-  // Pain points from latest version negative reviews - TOP 3 only
+  // Pain points from latest version negative reviews - TOP 5
   const painPoints = useMemo(() => {
     const latestVer = vB || (versions.length === 1 ? versions[0] : '');
-    if (!latestVer) return keywords.filter(k => k.sentiment === 'negative').sort((a, b) => b.weight - a.weight).slice(0, 3);
+    if (!latestVer) return keywords.filter(k => k.sentiment === 'negative').sort((a, b) => b.weight - a.weight).slice(0, 5);
 
     const latestReviews = allVersionReviews.filter(r => r.version === latestVer && r.sentiment === 'negative' && r.keywords?.length);
     const kwMap = new Map<string, number>();
@@ -111,12 +111,12 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     }
 
     if (kwMap.size === 0) {
-      return keywords.filter(k => k.sentiment === 'negative').sort((a, b) => b.weight - a.weight).slice(0, 3);
+      return keywords.filter(k => k.sentiment === 'negative').sort((a, b) => b.weight - a.weight).slice(0, 5);
     }
 
     return Array.from(kwMap.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
+      .slice(0, 5)
       .map(([text, weight]) => ({ text, weight, sentiment: 'negative' as const }));
   }, [allVersionReviews, keywords, vB, versions]);
 

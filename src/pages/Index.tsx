@@ -107,29 +107,12 @@ const Index = () => {
           if (r.version) versionSet.add(r.version);
         }
 
-        // Only fetch additional page if no second version found in current dataset
+        // Background Version Match: fetch additional pages in background for version comparison only
+        // These reviews are NEVER added to the main review list
         if (versionSet.size <= 1 && result.hasNextPage) {
-          try {
-            const page2 = await fetchReviews(app.id, store, country, 2);
-            if (page2.success && page2.reviews?.length > 0) {
-              for (const r of page2.reviews) {
-                if (r.version) versionSet.add(r.version);
-              }
-              allReviews = [...allReviews, ...page2.reviews];
-              setCurrentPage(2);
-              setHasNextPage(page2.hasNextPage || false);
-            }
-          } catch (e) {
-            console.error('Version scan fetch error:', e);
-          }
-        }
-
-        // Background Version Match: if still only 1 version, fetch more pages in background
-        // These extra reviews are NOT added to the main review list - only used for version comparison
-        if (versionSet.size <= 1) {
           const bgFetch = async () => {
-            let bgPage = (versionSet.size <= 1 && result.hasNextPage) ? 3 : 2;
-            const maxBgPages = bgPage + 3; // try up to 4 additional pages
+            let bgPage = 2;
+            const maxBgPages = 6; // try up to 5 additional pages
             let bgReviews: ReviewResult[] = [];
             while (bgPage <= maxBgPages) {
               try {
@@ -139,7 +122,7 @@ const Index = () => {
                 for (const r of bgResult.reviews) {
                   if (r.version) versionSet.add(r.version);
                 }
-                if (versionSet.size > 1) break; // found previous version
+                if (versionSet.size > 1) break;
                 if (!bgResult.hasNextPage) break;
                 bgPage++;
               } catch { break; }
