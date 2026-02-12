@@ -285,17 +285,24 @@ const Index = () => {
         <div className="absolute top-[40%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-[hsl(200,60%,93%)] opacity-25 blur-[100px]" />
       </div>
       <header className="border-b border-border/50 bg-white/30 backdrop-blur-2xl">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold">
-              <span className="gradient-text">App Review</span>{' '}
-              <span className="text-foreground">Analytics</span>
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">앱 리뷰를 검색하고 분석하세요</p>
+        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div>
+              <h1 className="text-2xl font-display font-bold">
+                <span className="gradient-text">App Review</span>{' '}
+                <span className="text-foreground">Analytics</span>
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">앱 리뷰를 검색하고 분석하세요</p>
+            </div>
+            <div className="sm:hidden shrink-0">
+              <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <StoreSelector selected={store} onSelect={s => { setStore(s); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
-            <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+            <div className="hidden sm:block">
+              <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+            </div>
           </div>
         </div>
       </header>
