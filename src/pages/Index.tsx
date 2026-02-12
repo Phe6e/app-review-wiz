@@ -390,8 +390,8 @@ const Index = () => {
               />
             </section>
 
-            {/* Churn Warning Widget & Version Comparison */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Churn Warning Widget */}
+            <section>
               <ChurnWarningWidget
                 users={churnUsers}
                 store={store}
@@ -400,7 +400,6 @@ const Index = () => {
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }}
               />
-              <VersionComparisonBar reviews={dateFilteredReviews} store={store} />
             </section>
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -408,6 +407,11 @@ const Index = () => {
               <RatingDistribution data={computedRatingDist} store={store} />
               <SentimentTrend reviews={dateFilteredReviews} store={store} />
               <KeywordBarChart keywords={computedKeywords} store={store} />
+            </section>
+
+            {/* Version Comparison - below charts */}
+            <section>
+              <VersionComparisonBar reviews={dateFilteredReviews} store={store} keywords={computedKeywords} />
             </section>
 
             <section>
