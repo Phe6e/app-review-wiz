@@ -95,17 +95,39 @@ const Index = () => {
       const result = await fetchReviews(app.id, store, country, 1);
 
       if (result.success && result.reviews && result.reviews.length > 0) {
-        setReviews(result.reviews);
+        let allReviews: ReviewResult[] = result.reviews;
         setHasNextPage(result.hasNextPage || false);
         setCurrentPage(1);
 
+        // Smart fetching: check if we need previous version data
+        const versionSet = new Set<string>();
+        for (const r of allReviews) {
+          if (r.version) versionSet.add(r.version);
+        }
+
+        // If only 1 version found and there might be more pages, fetch page 2 for comparison
+        if (versionSet.size <= 1 && result.hasNextPage) {
+          try {
+            const page2 = await fetchReviews(app.id, store, country, 2);
+            if (page2.success && page2.reviews?.length > 0) {
+              allReviews = [...allReviews, ...page2.reviews];
+              setCurrentPage(2);
+              setHasNextPage(page2.hasNextPage || false);
+            }
+          } catch (e) {
+            console.error('Smart fetch page 2 error:', e);
+          }
+        }
+
+        setReviews(allReviews);
+
         const dist = [5, 4, 3, 2, 1].map(r => ({
           rating: r,
-          count: result.reviews.filter((rev: ReviewResult) => rev.rating === r).length,
+          count: allReviews.filter((rev: ReviewResult) => rev.rating === r).length,
         }));
         setRatingDist(dist);
 
-        await analyzeAndUpdate(result.reviews);
+        await analyzeAndUpdate(allReviews);
       } else {
         setIsUsingMockData(true);
         setReviews(mockReviews as unknown as ReviewResult[]);
