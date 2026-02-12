@@ -17,6 +17,29 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <script src="https://cdn.amplitude.com/script/0aaf736ca743d54943d8c446c34db807.js"></script>
+    <script>
+      window.amplitude.add(window.sessionReplay.plugin({sampleRate: 1}));
+      window.amplitude.init('0aaf736ca743d54943d8c446c34db807', {
+        "fetchRemoteConfig": true,
+        "autocapture": {
+          "attribution": true,
+          "fileDownloads": true,
+          "formInteractions": true,
+          "pageViews": true,
+          "sessions": true,
+          "elementInteractions": true,
+          "networkTracking": true,
+          "webVitals": true,
+          "frustrationInteractions": {
+            "errorClicks": true,
+            "deadClicks": true,
+            "rageClicks": true
+          }
+        }
+      });
+    </script>
   </head>
 
   <body>
