@@ -1,4 +1,5 @@
 import { Store } from '@/data/mockData';
+import { toast } from 'sonner';
 
 interface StoreSelectorProps {
   selected: Store;
@@ -6,20 +7,25 @@ interface StoreSelectorProps {
 }
 
 const StoreSelector = ({ selected, onSelect }: StoreSelectorProps) => {
+  const handleGoogleClick = () => {
+    toast.info('Google Play 분석은 준비 중입니다.', {
+      description: 'API 연동이 완료되면 사용할 수 있습니다. App Store를 이용해주세요.',
+    });
+  };
+
   return (
     <div className="flex gap-2 sm:gap-3 justify-center w-full sm:w-auto">
       <button
-        onClick={() => onSelect('google')}
-        className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-3 px-1 py-2 sm:px-6 sm:py-3 rounded-xl font-display font-medium text-[9px] sm:text-base transition-all duration-300 whitespace-normal text-center ${
-          selected === 'google'
-            ? 'bg-primary text-primary-foreground glow'
-            : 'glass-card text-muted-foreground hover:text-foreground hover:border-primary/30'
-        }`}
+        onClick={handleGoogleClick}
+        className="flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-3 px-1 py-2 sm:px-6 sm:py-3 rounded-xl font-display font-medium text-[9px] sm:text-base transition-all duration-300 whitespace-normal text-center relative opacity-50 cursor-not-allowed glass-card text-muted-foreground"
       >
         <svg viewBox="0 0 24 24" className="w-3 h-3 sm:w-5 sm:h-5 shrink-0" fill="currentColor">
           <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
         </svg>
         Google Play
+        <span className="absolute -top-2 -right-1 sm:-top-2 sm:-right-3 text-[7px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary backdrop-blur-sm border border-primary/20">
+          Coming Soon
+        </span>
       </button>
       <button
         onClick={() => onSelect('apple')}
