@@ -50,9 +50,9 @@ function buildAnalysis(reviews: ReviewResult[]) {
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 5),
     sentimentDist: [
-      { name: '긍정', value: pos, color: '#007AFF' },
-      { name: '부정', value: neg, color: '#FF3B30' },
-      { name: '중립', value: neu, color: '#8E8E93' },
+      { name: 'ポジティブ', value: pos, color: '#007AFF' },
+      { name: 'ネガティブ', value: neg, color: '#FF3B30' },
+      { name: 'ニュートラル', value: neu, color: '#8E8E93' },
     ],
     ratingDist: [5, 4, 3, 2, 1].map(r => ({
       rating: r,
@@ -98,10 +98,10 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
     setCompetitorApp(app);
     setCompetitorReviews([]);
     setLoading(true);
-    setProgress('비교 앱 리뷰 수집 중...');
+    setProgress('比較アプリのレビュー収集中...');
     try {
       const reviews = await fetchBulkReviews(app.id, store, country, 300);
-      setProgress(`${reviews.length}개 리뷰 감성 분석 중...`);
+      setProgress(`${reviews.length}件のレビューを感情分析中...`);
       if (reviews.length > 0) {
         const analysis = await analyzeReviews(reviews);
         setCompetitorReviews(analysis.success ? analysis.reviews : reviews);
@@ -140,9 +140,9 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
     if (effectiveMyReviews.length === 0) return null;
     const analysis = buildAnalysis(effectiveMyReviews);
     analysis.sentimentDist = [
-      { name: '긍정', value: analysis.sentimentDist[0].value, color: '#007AFF' },
-      { name: '부정', value: analysis.sentimentDist[1].value, color: '#FF3B30' },
-      { name: '중립', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
+      { name: 'ポジティブ', value: analysis.sentimentDist[0].value, color: '#007AFF' },
+      { name: 'ネガティブ', value: analysis.sentimentDist[1].value, color: '#FF3B30' },
+      { name: 'ニュートラル', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
     ];
     return { ...analysis, avgRating: analysis.avgRating || myApp.rating };
   }, [myApp, effectiveMyReviews]);
@@ -151,9 +151,9 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
     if (!competitorApp || competitorReviews.length === 0) return null;
     const analysis = buildAnalysis(competitorReviews);
     analysis.sentimentDist = [
-      { name: '긍정', value: analysis.sentimentDist[0].value, color: '#5856D6' },
-      { name: '부정', value: analysis.sentimentDist[1].value, color: '#FF9500' },
-      { name: '중립', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
+      { name: 'ポジティブ', value: analysis.sentimentDist[0].value, color: '#5856D6' },
+      { name: 'ネガティブ', value: analysis.sentimentDist[1].value, color: '#FF9500' },
+      { name: 'ニュートラル', value: analysis.sentimentDist[2].value, color: '#8E8E93' },
     ];
     return { ...analysis, avgRating: analysis.avgRating || competitorApp.rating };
   }, [competitorApp, competitorReviews]);
@@ -185,36 +185,36 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
     const items: string[] = [];
 
     if (ratingDiff !== null) {
-      if (ratingDiff > 0) items.push(`기준 앱이 비교 앱보다 평점이 ${ratingDiff}점 높습니다.`);
-      else if (ratingDiff < 0) items.push(`비교 앱이 기준 앱보다 평점이 ${Math.abs(ratingDiff)}점 높습니다.`);
-      else items.push('두 앱의 평균 평점이 동일합니다.');
+      if (ratingDiff > 0) items.push(`基準アプリは比較アプリより評価が${ratingDiff}点高いです。`);
+      else if (ratingDiff < 0) items.push(`比較アプリは基準アプリより評価が${Math.abs(ratingDiff)}点高いです。`);
+      else items.push('両アプリの平均評価は同じです。');
     }
 
-    const myPos = effectiveMyAnalysis.sentimentDist.find(d => d.name === '긍정')?.value || 0;
+    const myPos = effectiveMyAnalysis.sentimentDist.find(d => d.name === 'ポジティブ')?.value || 0;
     const myTotal = effectiveMyAnalysis.sentimentDist.reduce((s, d) => s + d.value, 0) || 1;
-    const compPos = compAnalysis.sentimentDist.find(d => d.name === '긍정')?.value || 0;
+    const compPos = compAnalysis.sentimentDist.find(d => d.name === 'ポジティブ')?.value || 0;
     const compTotal = compAnalysis.sentimentDist.reduce((s, d) => s + d.value, 0) || 1;
     const myPosRate = Math.round((myPos / myTotal) * 100);
     const compPosRate = Math.round((compPos / compTotal) * 100);
     if (myPosRate > compPosRate) {
-      items.push(`기준 앱의 긍정 리뷰 비율이 비교 앱보다 ${myPosRate - compPosRate}%p 높습니다.`);
+      items.push(`基準アプリのポジティブレビュー比率が比較アプリより${myPosRate - compPosRate}%p高いです。`);
     } else if (compPosRate > myPosRate) {
-      items.push(`비교 앱의 긍정 리뷰 비율이 ${compPosRate - myPosRate}%p 더 높습니다.`);
+      items.push(`比較アプリのポジティブレビュー比率が${compPosRate - myPosRate}%p高いです。`);
     }
 
     const myKws = new Set(effectiveMyAnalysis.keywords.map(k => k.text));
     const compKws = new Set(compAnalysis.keywords.map(k => k.text));
     const unique = effectiveMyAnalysis.keywords.filter(k => !compKws.has(k.text));
     if (unique.length > 0) {
-      items.push(`기준 앱은 '${unique[0].text}' 키워드에서 우세합니다. (언급 ${unique[0].weight}회)`);
+      items.push(`基準アプリは「${unique[0].text}」キーワードで優位です。(言及${unique[0].weight}回)`);
     }
     const compUnique = compAnalysis.keywords.filter(k => !myKws.has(k.text));
     if (compUnique.length > 0) {
-      items.push(`비교 앱은 '${compUnique[0].text}' 키워드에서 상승세입니다. (언급 ${compUnique[0].weight}회)`);
+      items.push(`比較アプリは「${compUnique[0].text}」キーワードで上昇傾向です。(言及${compUnique[0].weight}回)`);
     }
 
     // Review count insight
-    items.push(`분석 기반: 기준 앱 ${effectiveMyReviews.length}개, 비교 앱 ${competitorReviews.length}개 리뷰`);
+    items.push(`分析基盤: 基準アプリ${effectiveMyReviews.length}件、比較アプリ${competitorReviews.length}件のレビュー`);
 
     return items;
   }, [effectiveMyAnalysis, compAnalysis, ratingDiff, effectiveMyReviews.length, competitorReviews.length]);
@@ -222,8 +222,8 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
   if (!myApp) {
     return (
       <div className="glass-card p-16 text-center animate-fade-in">
-        <p className="text-muted-foreground text-lg font-medium">먼저 '앱 분석' 탭에서 앱을 검색해주세요.</p>
-        <p className="text-sm text-muted-foreground mt-2">검색 후 앱 비교 기능을 이용할 수 있습니다.</p>
+        <p className="text-muted-foreground text-lg font-medium">まず「アプリ分析」タブでアプリを検索してください。</p>
+        <p className="text-sm text-muted-foreground mt-2">検索後にアプリ比較機能をご利用いただけます。</p>
       </div>
     );
   }
@@ -239,7 +239,7 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
             <p className="text-sm text-muted-foreground">{myApp.developer}</p>
           </div>
           <div className="ml-auto px-3 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(0, 122, 255, 0.1)', color: '#007AFF' }}>
-            기준 앱
+            基準アプリ
           </div>
         </div>
         <div className="text-center font-bold text-lg text-muted-foreground hidden md:block">VS</div>
@@ -253,9 +253,9 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
               </div>
               <div className="ml-auto flex items-center gap-2">
                 <div className="px-3 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(88, 86, 214, 0.1)', color: '#5856D6' }}>
-                  비교 앱
+                  比較アプリ
                 </div>
-                <button onClick={() => { setCompetitorApp(null); setCompetitorReviews([]); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">변경</button>
+                <button onClick={() => { setCompetitorApp(null); setCompetitorReviews([]); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">変更</button>
               </div>
             </div>
           ) : (
@@ -269,7 +269,7 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
         <div className="glass-card p-12 text-center">
           <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mb-3" />
           <p className="text-foreground font-medium">
-            {loading ? '비교 앱 데이터를 정밀 분석 중입니다...' : '기준 앱 데이터를 확장 수집 중입니다...'}
+            {loading ? '比較アプリのデータを精密分析中です...' : '基準アプリのデータを拡張収集中です...'}
           </p>
           {progress && <p className="text-sm text-muted-foreground mt-1">{progress}</p>}
         </div>
@@ -279,27 +279,27 @@ const CompetitorComparison = ({ store, country, myApp, myReviews }: CompetitorCo
         <>
           {/* 1. Minimal Rating Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <MinimalRatingCard label="기준 앱 별점" avgRating={effectiveMyAnalysis.avgRating} color="#007AFF" />
-            <MinimalRatingCard label="비교 앱 별점" avgRating={compAnalysis.avgRating} color="#5856D6" />
+            <MinimalRatingCard label="基準アプリの評価" avgRating={effectiveMyAnalysis.avgRating} color="#007AFF" />
+            <MinimalRatingCard label="比較アプリの評価" avgRating={compAnalysis.avgRating} color="#5856D6" />
           </div>
 
           {/* 2. Sentiment Donut Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <DonutCard title="기준 앱 감성 분석" data={effectiveMyAnalysis.sentimentDist} />
-            <DonutCard title="비교 앱 감성 분석" data={compAnalysis.sentimentDist} />
+            <DonutCard title="基準アプリの感情分析" data={effectiveMyAnalysis.sentimentDist} />
+            <DonutCard title="比較アプリの感情分析" data={compAnalysis.sentimentDist} />
           </div>
 
           {/* 3. Keyword Bubbles (moved up) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <KeywordBubbles title="기준 앱 주요 키워드" keywords={effectiveMyAnalysis.keywords} hue="blue" />
-            <KeywordBubbles title="비교 앱 주요 키워드" keywords={compAnalysis.keywords} hue="purple" />
+            <KeywordBubbles title="基準アプリの主要キーワード" keywords={effectiveMyAnalysis.keywords} hue="blue" />
+            <KeywordBubbles title="比較アプリの主要キーワード" keywords={compAnalysis.keywords} hue="purple" />
           </div>
 
           {/* 5. Auto Insights */}
           {insights.length > 0 && (
             <div className="glass-card p-6">
               <h3 className="font-semibold text-base text-foreground mb-4 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-accent" /> 자동 인사이트
+                <Zap className="w-4 h-4 text-accent" /> 自動インサイト
               </h3>
               <div className="space-y-3">
                 {insights.map((text, i) => (
@@ -346,7 +346,7 @@ const DonutCard = ({ title, data }: { title: string; data: { name: string; value
     return (
       <div className="glass-card p-6 flex flex-col h-full">
         <h3 className="font-semibold text-base text-foreground mb-4 text-center">{title}</h3>
-        <div className="flex-1 flex items-center justify-center"><p className="text-sm text-muted-foreground">데이터 없음</p></div>
+        <div className="flex-1 flex items-center justify-center"><p className="text-sm text-muted-foreground">データなし</p></div>
       </div>
     );
   }
@@ -409,7 +409,7 @@ const KeywordBubbles = ({ title, keywords, hue }: { title: string; keywords: { t
     <div className="glass-card p-6">
       <h3 className="font-semibold text-base text-foreground mb-5 text-center">{title}</h3>
       {keywords.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center">데이터 없음</p>
+        <p className="text-sm text-muted-foreground text-center">データなし</p>
       ) : (
         <div className="flex flex-wrap justify-center gap-3">
           {keywords.map(kw => {

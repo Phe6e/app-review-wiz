@@ -22,9 +22,9 @@ const RatingDistribution = ({ data = defaultData, store = 'apple' }: RatingDistr
   if (total === 0) {
     return (
       <div className="glass-card p-6 flex flex-col h-full">
-        <h3 className="font-semibold text-base text-foreground mb-4 text-center">평점 분포</h3>
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">評価分布</h3>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">선택한 기간에 데이터가 없습니다</p>
+          <p className="text-sm text-muted-foreground">選択した期間にデータがありません</p>
         </div>
       </div>
     );
@@ -41,7 +41,7 @@ const RatingDistribution = ({ data = defaultData, store = 'apple' }: RatingDistr
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-semibold text-base text-foreground mb-4 text-center">평점 분포</h3>
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">評価分布</h3>
       <div className="flex-1 flex flex-col justify-center gap-3">
         {data.map(d => (
           <div key={d.rating} className="flex items-center gap-3">

@@ -47,7 +47,7 @@ const AppSearchBar = ({ store, country = 'kr', onSelectApp }: AppSearchBarProps)
           onChange={e => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-          placeholder={`${store === 'google' ? 'Google Play' : 'App Store'}에서 앱 검색... (예: Instagram, YouTube)`}
+          placeholder={`${store === 'google' ? 'Google Play' : 'App Store'}でアプリを検索... (例: Instagram, YouTube)`}
           className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground font-body"
         />
       </div>
@@ -80,7 +80,7 @@ const AppSearchBar = ({ store, country = 'kr', onSelectApp }: AppSearchBarProps)
 
       {store === 'google' && isFocused && query.length >= 2 && (
         <div className="absolute z-40 w-full mt-2 rounded-xl glass-card p-4 text-sm text-muted-foreground">
-          ⚠️ Google Play 검색은 아직 지원되지 않습니다. App Store를 이용해주세요.
+          ⚠️ Google Play検索はまだ対応していません。App Storeをご利用ください。
         </div>
       )}
     </div>

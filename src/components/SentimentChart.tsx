@@ -11,15 +11,15 @@ const SentimentChart = ({ data, store = 'apple' }: SentimentChartProps) => {
   const colors = getStoreColors(store);
 
   const chartData = data || [
-    { name: '긍정', value: 52, color: colors.positive },
-    { name: '부정', value: 32, color: colors.negative },
-    { name: '중립', value: 16, color: colors.neutral },
+    { name: 'ポジティブ', value: 52, color: colors.positive },
+    { name: 'ネガティブ', value: 32, color: colors.negative },
+    { name: 'ニュートラル', value: 16, color: colors.neutral },
   ];
 
   // Override colors from store palette
   const coloredData = chartData.map(d => {
-    if (d.name === '긍정') return { ...d, color: colors.positive };
-    if (d.name === '부정') return { ...d, color: colors.negative };
+    if (d.name === 'ポジティブ') return { ...d, color: colors.positive };
+    if (d.name === 'ネガティブ') return { ...d, color: colors.negative };
     return { ...d, color: colors.neutral };
   });
 
@@ -28,9 +28,9 @@ const SentimentChart = ({ data, store = 'apple' }: SentimentChartProps) => {
   if (total === 0) {
     return (
       <div className="glass-card p-6 flex flex-col h-full">
-        <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 분석</h3>
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">感情分析</h3>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">선택한 기간에 데이터가 없습니다</p>
+          <p className="text-sm text-muted-foreground">選択した期間にデータがありません</p>
         </div>
       </div>
     );
@@ -38,7 +38,7 @@ const SentimentChart = ({ data, store = 'apple' }: SentimentChartProps) => {
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 분석</h3>
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">感情分析</h3>
       <div className="flex-1 flex flex-row items-center justify-center gap-6">
         <div className="w-36 h-36 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -59,7 +59,7 @@ const SentimentChart = ({ data, store = 'apple' }: SentimentChartProps) => {
               </defs>
               <Pie data={coloredData} cx="50%" cy="50%" innerRadius={36} outerRadius={58} dataKey="value" strokeWidth={0}>
                 {coloredData.map((entry, index) => {
-                  const gradId = entry.name === '긍정' ? 'url(#sentGradPos)' : entry.name === '부정' ? 'url(#sentGradNeg)' : 'url(#sentGradNeu)';
+                  const gradId = entry.name === 'ポジティブ' ? 'url(#sentGradPos)' : entry.name === 'ネガティブ' ? 'url(#sentGradNeg)' : 'url(#sentGradNeu)';
                   return <Cell key={index} fill={gradId} />;
                 })}
               </Pie>

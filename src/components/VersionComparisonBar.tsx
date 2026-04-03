@@ -155,7 +155,7 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
       <div className="flex items-center gap-1 shrink-0">
         <AlertTriangle className="w-3.5 h-3.5" style={{ color: colors.negative }} />
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap leading-none">주요 이슈</span>
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap leading-none">主要課題</span>
       </div>
       <div className="flex items-center gap-1 flex-wrap min-w-0">
         {painPoints.map(pp => (
@@ -177,7 +177,7 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
     </div>
   ) : (
     <div className="flex items-center gap-1.5">
-      <span className="text-[10px] text-muted-foreground">이슈 없음 ✓</span>
+      <span className="text-[10px] text-muted-foreground">課題なし ✓</span>
     </div>
   );
 
@@ -188,7 +188,7 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-2 flex-wrap">
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <span className="font-display font-semibold text-xs text-muted-foreground">버전별 비교</span>
+            <span className="font-display font-semibold text-xs text-muted-foreground">バージョン別比較</span>
           </div>
           <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
           <Separator orientation="horizontal" className="sm:hidden opacity-30" />
@@ -196,7 +196,7 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
             <Skeleton className="h-5 w-16 rounded-md" />
             <Skeleton className="h-5 w-14 rounded-md" />
             <Skeleton className="h-5 w-14 rounded-md" />
-            <span className="text-[11px] text-muted-foreground">앱을 검색하면 버전별 비교 데이터가 표시됩니다</span>
+            <span className="text-[11px] text-muted-foreground">アプリを検索するとバージョン別比較データが表示されます</span>
           </div>
         </div>
       </div>
@@ -210,11 +210,11 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-2">
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <span className="font-display font-semibold text-xs text-muted-foreground">버전별 비교</span>
+            <span className="font-display font-semibold text-xs text-muted-foreground">バージョン別比較</span>
           </div>
           <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
           <Separator orientation="horizontal" className="sm:hidden opacity-30" />
-          <span className="text-[11px] text-muted-foreground">버전 정보가 포함된 리뷰가 없습니다</span>
+          <span className="text-[11px] text-muted-foreground">バージョン情報を含むレビューがありません</span>
         </div>
       </div>
     );
@@ -230,15 +230,15 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
             <div className="flex items-center gap-1.5 shrink-0">
               <Info className="w-3 h-3 text-muted-foreground" />
               <span className="font-display font-semibold text-xs text-foreground truncate max-w-[120px]">v{singleVersionStats.version}</span>
-              <span className="text-[10px] text-muted-foreground">({singleVersionStats.count}건)</span>
+              <span className="text-[10px] text-muted-foreground">({singleVersionStats.count}件)</span>
             </div>
-            <MetricChip label="평균">
+            <MetricChip label="平均">
               <span className="text-xs font-semibold text-foreground leading-none">{singleVersionStats.avg}</span>
             </MetricChip>
-            <MetricChip label="긍정">
+            <MetricChip label="ポジティブ">
               <span className="text-xs font-semibold leading-none" style={{ color: colors.positive }}>{singleVersionStats.posRate}%</span>
             </MetricChip>
-            <MetricChip label="부정">
+            <MetricChip label="ネガティブ">
               <span className="text-xs font-semibold leading-none" style={{ color: colors.negative }}>{singleVersionStats.negRate}%</span>
             </MetricChip>
           </div>
@@ -262,14 +262,14 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-2">
             <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <span className="font-display font-semibold text-xs text-muted-foreground">버전별 비교</span>
+            <span className="font-display font-semibold text-xs text-muted-foreground">バージョン別比較</span>
           </div>
           <Separator orientation="vertical" className="hidden sm:block h-6 opacity-30" />
           <Separator orientation="horizontal" className="sm:hidden opacity-30" />
           <div className="flex items-center gap-2 flex-wrap flex-1">
             <Skeleton className="h-5 w-16 rounded-md animate-pulse" />
             <Skeleton className="h-5 w-14 rounded-md animate-pulse" />
-            <span className="text-[11px] text-muted-foreground">버전 데이터를 분석 중입니다...</span>
+            <span className="text-[11px] text-muted-foreground">バージョンデータを分析中です...</span>
           </div>
         </div>
       </div>
@@ -282,24 +282,24 @@ const VersionComparisonBar = ({ reviews, store, keywords = [], backgroundReviews
         {/* Left: version label + metrics */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 shrink-0 min-w-0">
-            <span className="font-display font-semibold text-xs text-foreground whitespace-nowrap">버전 비교</span>
+            <span className="font-display font-semibold text-xs text-foreground whitespace-nowrap">バージョン比較</span>
             <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
               v{stats.vA}({stats.countA}) → v{stats.vB}({stats.countB})
             </span>
           </div>
-          <MetricChip label="평점">
+          <MetricChip label="評価">
             <Arrow val={stats.ratingChange} />
             <span className="text-xs font-semibold leading-none" style={{ color: valColor(stats.ratingChange) }}>
               {stats.ratingChange > 0 ? '+' : ''}{stats.ratingChange}
             </span>
           </MetricChip>
-          <MetricChip label="긍정">
+          <MetricChip label="ポジティブ">
             <Arrow val={stats.posChange} />
             <span className="text-xs font-semibold leading-none" style={{ color: valColor(stats.posChange) }}>
               {stats.posChange > 0 ? '+' : ''}{stats.posChange}%
             </span>
           </MetricChip>
-          <MetricChip label="부정">
+          <MetricChip label="ネガティブ">
             <Arrow val={stats.negChange} />
             <span className="text-xs font-semibold leading-none" style={{ color: valColor(stats.negChange, true) }}>
               {stats.negChange > 0 ? '+' : ''}{stats.negChange}%

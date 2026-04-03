@@ -37,9 +37,9 @@ const SentimentTrend = ({ reviews = [], store = 'apple' }: SentimentTrendProps) 
   if (trendData.length === 0) {
     return (
       <div className="glass-card p-6 flex flex-col h-full">
-        <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 트렌드</h3>
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">感情トレンド</h3>
         <div className="flex-1 flex items-center justify-center min-h-[14rem]">
-          <p className="text-sm text-muted-foreground">선택한 기간에 데이터가 없습니다</p>
+          <p className="text-sm text-muted-foreground">選択した期間にデータがありません</p>
         </div>
       </div>
     );
@@ -47,7 +47,7 @@ const SentimentTrend = ({ reviews = [], store = 'apple' }: SentimentTrendProps) 
 
   return (
     <div className="glass-card p-6 flex flex-col h-full">
-      <h3 className="font-semibold text-base text-foreground mb-4 text-center">감성 트렌드</h3>
+      <h3 className="font-semibold text-base text-foreground mb-4 text-center">感情トレンド</h3>
       <div className="flex-1 flex items-center justify-center min-h-[14rem] px-2">
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={trendData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
@@ -76,8 +76,8 @@ const SentimentTrend = ({ reviews = [], store = 'apple' }: SentimentTrendProps) 
                 boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
               }}
             />
-            <Area type="monotone" dataKey="positive" name="긍정" stroke={colors.positive} fill="url(#positiveGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
-            <Area type="monotone" dataKey="negative" name="부정" stroke={colors.negative} fill="url(#negativeGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
+            <Area type="monotone" dataKey="positive" name="ポジティブ" stroke={colors.positive} fill="url(#positiveGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
+            <Area type="monotone" dataKey="negative" name="ネガティブ" stroke={colors.negative} fill="url(#negativeGrad)" strokeWidth={2.5} strokeLinecap="round" dot={false} strokeOpacity={0.8} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

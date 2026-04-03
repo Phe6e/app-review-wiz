@@ -55,9 +55,9 @@ const KeywordBarChart = ({ keywords = [], store = 'apple' }: KeywordBarChartProp
   if (rows.length === 0 || (rows[0].posWeight === 0 && rows[0].negWeight === 0)) {
     return (
       <div className="glass-card p-6 flex flex-col h-full">
-        <h3 className="font-semibold text-base text-foreground mb-4 text-center">주요 키워드</h3>
+        <h3 className="font-semibold text-base text-foreground mb-4 text-center">主要キーワード</h3>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">데이터 없음</p>
+          <p className="text-sm text-muted-foreground">データなし</p>
         </div>
       </div>
     );
@@ -65,14 +65,14 @@ const KeywordBarChart = ({ keywords = [], store = 'apple' }: KeywordBarChartProp
 
   return (
     <div className="glass-card p-6 flex flex-col h-full relative">
-      <h3 className="font-semibold text-base text-foreground mb-2 text-center">주요 키워드</h3>
+      <h3 className="font-semibold text-base text-foreground mb-2 text-center">主要キーワード</h3>
       <div className="flex items-center justify-center gap-6 mb-4">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: colors.positive }} />
-          <span className="text-xs text-muted-foreground">← 긍정</span>
+          <span className="text-xs text-muted-foreground">← ポジティブ</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">부정 →</span>
+          <span className="text-xs text-muted-foreground">ネガティブ →</span>
           <div className="w-2.5 h-2.5 rounded-full" style={{ background: colors.negative }} />
         </div>
       </div>
@@ -80,8 +80,8 @@ const KeywordBarChart = ({ keywords = [], store = 'apple' }: KeywordBarChartProp
         {rows.map((row, i) => (
           <div key={i} className="flex items-center gap-0 h-7">
             <span className="text-xs text-muted-foreground w-16 text-right truncate pr-2 flex-shrink-0 cursor-default"
-              onMouseEnter={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
-              onMouseMove={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
+              onMouseEnter={e => row.posText && showTooltip(e, row.posText, row.posWeight, 'ポジティブ')}
+              onMouseMove={e => row.posText && showTooltip(e, row.posText, row.posWeight, 'ポジティブ')}
               onMouseLeave={hideTooltip}>{row.posText}</span>
             <div className="flex-1 flex justify-end">
               <div className="h-5 rounded-full transition-all duration-500 cursor-pointer"
@@ -91,8 +91,8 @@ const KeywordBarChart = ({ keywords = [], store = 'apple' }: KeywordBarChartProp
                   minWidth: row.posWidth > 0 ? '6px' : '0',
                   opacity: 0.85,
                 }}
-                onMouseEnter={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
-                onMouseMove={e => row.posText && showTooltip(e, row.posText, row.posWeight, '긍정')}
+                onMouseEnter={e => row.posText && showTooltip(e, row.posText, row.posWeight, 'ポジティブ')}
+                onMouseMove={e => row.posText && showTooltip(e, row.posText, row.posWeight, 'ポジティブ')}
                 onMouseLeave={hideTooltip} />
             </div>
             <div className="w-px h-5 bg-border flex-shrink-0 mx-0.5" />
@@ -104,13 +104,13 @@ const KeywordBarChart = ({ keywords = [], store = 'apple' }: KeywordBarChartProp
                   minWidth: row.negWidth > 0 ? '6px' : '0',
                   opacity: 0.85,
                 }}
-                onMouseEnter={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
-                onMouseMove={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
+                onMouseEnter={e => row.negText && showTooltip(e, row.negText, row.negWeight, 'ネガティブ')}
+                onMouseMove={e => row.negText && showTooltip(e, row.negText, row.negWeight, 'ネガティブ')}
                 onMouseLeave={hideTooltip} />
             </div>
             <span className="text-xs text-muted-foreground w-16 text-left truncate pl-2 flex-shrink-0 cursor-default"
-              onMouseEnter={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
-              onMouseMove={e => row.negText && showTooltip(e, row.negText, row.negWeight, '부정')}
+              onMouseEnter={e => row.negText && showTooltip(e, row.negText, row.negWeight, 'ネガティブ')}
+              onMouseMove={e => row.negText && showTooltip(e, row.negText, row.negWeight, 'ネガティブ')}
               onMouseLeave={hideTooltip}>{row.negText}</span>
           </div>
         ))}
@@ -129,7 +129,7 @@ const KeywordBarChart = ({ keywords = [], store = 'apple' }: KeywordBarChartProp
               whiteSpace: 'nowrap',
             }}>
             <span className="font-semibold">{tooltip.text}</span>
-            <span className="text-muted-foreground ml-2">{tooltip.sentiment} · {tooltip.weight}회</span>
+            <span className="text-muted-foreground ml-2">{tooltip.sentiment} · {tooltip.weight}回</span>
           </div>
         </div>
       )}

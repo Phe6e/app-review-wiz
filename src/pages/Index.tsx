@@ -69,9 +69,9 @@ const Index = () => {
           const sd = analysis.sentimentDistribution;
           const c = getStoreColors(store);
           setSentimentDist([
-            { name: '긍정', value: sd.positive || 0, color: c.positive },
-            { name: '부정', value: sd.negative || 0, color: c.negative },
-            { name: '중립', value: sd.neutral || 0, color: c.neutral },
+            { name: 'ポジティブ', value: sd.positive || 0, color: c.positive },
+            { name: 'ネガティブ', value: sd.negative || 0, color: c.negative },
+            { name: 'ニュートラル', value: sd.neutral || 0, color: c.neutral },
           ]);
         }
       }
@@ -209,9 +209,9 @@ const Index = () => {
               const sd = analysis.sentimentDistribution;
               const c = getStoreColors(store);
               setSentimentDist([
-                { name: '긍정', value: sd.positive || 0, color: c.positive },
-                { name: '부정', value: sd.negative || 0, color: c.negative },
-                { name: '중립', value: sd.neutral || 0, color: c.neutral },
+                { name: 'ポジティブ', value: sd.positive || 0, color: c.positive },
+                { name: 'ネガティブ', value: sd.negative || 0, color: c.negative },
+                { name: 'ニュートラル', value: sd.neutral || 0, color: c.neutral },
               ]);
             }
           }
@@ -298,9 +298,9 @@ const Index = () => {
     const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
     const c = getStoreColors(store);
     return [
-      { name: '긍정', value: pos, color: c.positive },
-      { name: '부정', value: neg, color: c.negative },
-      { name: '중립', value: neu, color: c.neutral },
+      { name: 'ポジティブ', value: pos, color: c.positive },
+      { name: 'ネガティブ', value: neg, color: c.negative },
+      { name: 'ニュートラル', value: neu, color: c.neutral },
     ];
   }, [dateFilteredReviews, sentimentDist]);
 
@@ -345,7 +345,7 @@ const Index = () => {
                 <span className="gradient-text">App Review</span>{' '}
                 <span className="text-foreground">Analytics</span>
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">앱 리뷰를 검색하고 분석하세요</p>
+              <p className="text-sm text-muted-foreground mt-0.5">アプリのレビューを検索して分析する</p>
             </div>
             <div className="sm:hidden shrink-0">
               <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
@@ -364,7 +364,7 @@ const Index = () => {
         {/* Segmented Control */}
         <section className="flex justify-center">
           <SegmentedControl
-            tabs={['앱 분석', '앱 비교']}
+            tabs={['アプリ分析', 'アプリ比較']}
             activeIndex={activeTab}
             onChange={setActiveTab}
           />
@@ -388,14 +388,14 @@ const Index = () => {
                   <p className="text-sm text-muted-foreground">{selectedApp.developer}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-neutral font-display font-semibold">⭐ {selectedApp.rating}</span>
-                    <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} 리뷰</span>
-                    {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">데모 데이터</span>}
+                    <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} レビュー</span>
+                    {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">デモデータ</span>}
                   </div>
                 </div>
                 {(loading || analyzing) && (
                   <div className="ml-auto flex items-center gap-2 text-primary">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">{analyzing ? '감성 분석 중...' : '리뷰 로딩 중...'}</span>
+                    <span className="text-sm">{analyzing ? '感情分析中...' : 'レビュー読み込み中...'}</span>
                   </div>
                 )}
               </section>
@@ -411,19 +411,19 @@ const Index = () => {
             </section>
 
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="총 리뷰 수" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
-              <StatCard icon={<Star className="w-5 h-5" />} label="평균 평점" value={String(avgRating)} />
+              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="総レビュー数" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
+              <StatCard icon={<Star className="w-5 h-5" />} label="平均評価" value={String(avgRating)} />
               <StatCard
                 icon={<TrendingUp className="w-5 h-5" />}
-                label="평점 변동 추이"
+                label="評価変動推移"
                 value={`${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%`}
-                subtext={ratingTrend.direction === 'up' ? '▲ 전월 대비 상승' : ratingTrend.direction === 'down' ? '▼ 전월 대비 하락' : '— 변동 없음'}
+                subtext={ratingTrend.direction === 'up' ? '▲ 先月比上昇' : ratingTrend.direction === 'down' ? '▼ 先月比下落' : '— 変動なし'}
               />
               <StatCard
                 icon={<BarChart3 className="w-5 h-5" />}
-                label="리뷰 밀도"
+                label="レビュー密度"
                 value={`${reviewDensity}`}
-                subtext="최근 7일 일평균"
+                subtext="直近7日の日次平均"
               />
             </section>
 
@@ -454,8 +454,8 @@ const Index = () => {
             <section>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
                 <h3 className="text-xl font-display font-bold text-foreground">
-                  최신 리뷰
-                  {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}건)</span>}
+                  最新レビュー
+                  {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}件)</span>}
                 </h3>
                 <ReviewFilters
                   selectedRating={ratingFilter}
@@ -469,14 +469,14 @@ const Index = () => {
                 {loading ? (
                   <div className="glass-card p-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-muted-foreground">리뷰를 가져오는 중...</p>
+                    <p className="text-muted-foreground">レビューを取得中...</p>
                   </div>
                 ) : filteredReviews.length > 0 ? (
                   filteredReviews.map(review => <ReviewCard key={review.id} review={review} store={store} />)
                 ) : (
                   <div className="glass-card p-12 text-center">
                     <p className="text-muted-foreground">
-                      {reviews.length === 0 ? '앱을 검색하여 리뷰를 확인하세요.' : '해당 조건의 리뷰가 없습니다.'}
+                      {reviews.length === 0 ? 'アプリを検索してレビューを確認してください。' : '該当条件のレビューがありません。'}
                     </p>
                   </div>
                 )}
@@ -491,9 +491,9 @@ const Index = () => {
                     className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium disabled:opacity-50"
                   >
                     {loadingMore ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> 로딩 중...</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> 読み込み中...</>
                     ) : (
-                      <><ChevronDown className="w-4 h-4" /> 리뷰 더 보기</>
+                      <><ChevronDown className="w-4 h-4" /> レビューをもっと見る</>
                     )}
                   </button>
                 </div>

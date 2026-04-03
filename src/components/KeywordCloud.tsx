@@ -11,18 +11,18 @@ interface KeywordCloudProps {
 }
 
 const defaultKeywords: KeywordItem[] = [
-  { text: '디자인', weight: 85, sentiment: 'positive' },
+  { text: 'デザイン', weight: 85, sentiment: 'positive' },
   { text: 'UI', weight: 72, sentiment: 'positive' },
-  { text: '업데이트', weight: 90, sentiment: 'positive' },
-  { text: '배터리', weight: 65, sentiment: 'negative' },
-  { text: '기능', weight: 95, sentiment: 'positive' },
-  { text: '속도', weight: 60, sentiment: 'negative' },
-  { text: '편리함', weight: 82, sentiment: 'positive' },
-  { text: '콘텐츠', weight: 67, sentiment: 'neutral' },
-  { text: '추천', weight: 75, sentiment: 'positive' },
-  { text: '크래시', weight: 55, sentiment: 'negative' },
-  { text: '광고', weight: 78, sentiment: 'negative' },
-  { text: '보안', weight: 45, sentiment: 'negative' },
+  { text: 'アップデート', weight: 90, sentiment: 'positive' },
+  { text: 'バッテリー', weight: 65, sentiment: 'negative' },
+  { text: '機能', weight: 95, sentiment: 'positive' },
+  { text: '速度', weight: 60, sentiment: 'negative' },
+  { text: '使いやすさ', weight: 82, sentiment: 'positive' },
+  { text: 'コンテンツ', weight: 67, sentiment: 'neutral' },
+  { text: 'おすすめ', weight: 75, sentiment: 'positive' },
+  { text: 'クラッシュ', weight: 55, sentiment: 'negative' },
+  { text: '広告', weight: 78, sentiment: 'negative' },
+  { text: 'セキュリティ', weight: 45, sentiment: 'negative' },
 ];
 
 const POSITIVE_COLORS = [
@@ -199,11 +199,11 @@ const KeywordCloud = ({ keywords = defaultKeywords }: KeywordCloudProps) => {
   return (
     <div className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display font-semibold text-lg text-foreground">주요 키워드</h3>
+        <h3 className="font-display font-semibold text-lg text-foreground">主要キーワード</h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(172, 66%, 50%)' }} />긍정</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(0, 72%, 55%)' }} />부정</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(38, 80%, 55%)' }} />중립</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(172, 66%, 50%)' }} />ポジティブ</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(0, 72%, 55%)' }} />ネガティブ</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(38, 80%, 55%)' }} />ニュートラル</span>
         </div>
       </div>
       <div
