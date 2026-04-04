@@ -69,9 +69,9 @@ const Index = () => {
           const sd = analysis.sentimentDistribution;
           const c = getStoreColors(store);
           setSentimentDist([
-            { name: '?�ジ?�ィ??, value: sd.positive || 0, color: c.positive },
-            { name: '?�ガ?�ィ??, value: sd.negative || 0, color: c.negative },
-            { name: '?�ュ?�ト?�ル', value: sd.neutral || 0, color: c.neutral },
+            { name: 'ポジティブ', value: sd.positive || 0, color: c.positive },
+            { name: 'ネガティブ', value: sd.negative || 0, color: c.negative },
+            { name: 'ニュートラル', value: sd.neutral || 0, color: c.neutral },
           ]);
         }
       }
@@ -209,9 +209,9 @@ const Index = () => {
               const sd = analysis.sentimentDistribution;
               const c = getStoreColors(store);
               setSentimentDist([
-                { name: '?�ジ?�ィ??, value: sd.positive || 0, color: c.positive },
-                { name: '?�ガ?�ィ??, value: sd.negative || 0, color: c.negative },
-                { name: '?�ュ?�ト?�ル', value: sd.neutral || 0, color: c.neutral },
+                { name: 'ポジティブ', value: sd.positive || 0, color: c.positive },
+                { name: 'ネガティブ', value: sd.negative || 0, color: c.negative },
+                { name: 'ニュートラル', value: sd.neutral || 0, color: c.neutral },
               ]);
             }
           }
@@ -298,9 +298,9 @@ const Index = () => {
     const neu = analyzed.filter(r => r.sentiment === 'neutral').length;
     const c = getStoreColors(store);
     return [
-      { name: '?�ジ?�ィ??, value: pos, color: c.positive },
-      { name: '?�ガ?�ィ??, value: neg, color: c.negative },
-      { name: '?�ュ?�ト?�ル', value: neu, color: c.neutral },
+      { name: 'ポジティブ', value: pos, color: c.positive },
+      { name: 'ネガティブ', value: neg, color: c.negative },
+      { name: 'ニュートラル', value: neu, color: c.neutral },
     ];
   }, [dateFilteredReviews, sentimentDist]);
 
@@ -345,7 +345,7 @@ const Index = () => {
                 <span className="gradient-text">App Review</span>{' '}
                 <span className="text-foreground">Analytics</span>
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">?�プ?�の?�ビ?�ー?�検索し??��?�す??/p>
+              <p className="text-sm text-muted-foreground mt-0.5">アプリのレビューを検索して分析する</p>
             </div>
             <div className="sm:hidden shrink-0">
               <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
@@ -364,7 +364,7 @@ const Index = () => {
         {/* Segmented Control */}
         <section className="flex justify-center">
           <SegmentedControl
-            tabs={['?�プ?�分??, '?�プ?�比�?]}
+            tabs={['アプリ分析', 'アプリ比較']}
             activeIndex={activeTab}
             onChange={setActiveTab}
           />
@@ -381,21 +381,21 @@ const Index = () => {
                 {selectedApp.icon ? (
                   <img src={selectedApp.icon} alt={selectedApp.name} className="w-16 h-16 rounded-2xl" />
                 ) : (
-                  <span className="text-5xl">?��</span>
+                  <span className="text-5xl">📱</span>
                 )}
                 <div>
                   <h2 className="text-xl font-display font-bold text-foreground">{selectedApp.name}</h2>
                   <p className="text-sm text-muted-foreground">{selectedApp.developer}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-neutral font-display font-semibold">�?{selectedApp.rating}</span>
-                    <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} ?�ビ?�ー</span>
-                    {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">?�モ?�ー??/span>}
+                    <span className="text-neutral font-display font-semibold">⭐ {selectedApp.rating}</span>
+                    <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} レビュー</span>
+                    {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">デモデータ</span>}
                   </div>
                 </div>
                 {(loading || analyzing) && (
                   <div className="ml-auto flex items-center gap-2 text-primary">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">{analyzing ? '?�情?�析�?..' : '?�ビ?�ー�?��込み�?..'}</span>
+                    <span className="text-sm">{analyzing ? '感情分析中...' : 'レビュー読み込み中...'}</span>
                   </div>
                 )}
               </section>
@@ -411,19 +411,19 @@ const Index = () => {
             </section>
 
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="総レ?�ュ?�数" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
+              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="総レビュー数" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
               <StatCard icon={<Star className="w-5 h-5" />} label="平均評価" value={String(avgRating)} />
               <StatCard
                 icon={<TrendingUp className="w-5 h-5" />}
-                label="評価変動?�移"
+                label="評価変動推移"
                 value={`${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%`}
-                subtext={ratingTrend.direction === 'up' ? '???�月比上?? : ratingTrend.direction === 'down' ? '???�月比下?? : '??変動?�し'}
+                subtext={ratingTrend.direction === 'up' ? '▲ 先月比上昇' : ratingTrend.direction === 'down' ? '▼ 先月比下落' : '— 変動なし'}
               />
               <StatCard
                 icon={<BarChart3 className="w-5 h-5" />}
-                label="?�ビ?�ー密度"
+                label="レビュー密度"
                 value={`${reviewDensity}`}
-                subtext="?�近7?�の?�次平均"
+                subtext="直近7日の日次平均"
               />
             </section>
 
@@ -454,7 +454,8 @@ const Index = () => {
             <section>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
                 <h3 className="text-xl font-display font-bold text-foreground">
-                  ?�?�レ?�ュ??                  {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}�?</span>}
+                  最新レビュー
+                  {dateFilteredReviews.length > 0 && <span className="text-sm font-normal text-muted-foreground ml-2">({filteredReviews.length}件)</span>}
                 </h3>
                 <ReviewFilters
                   selectedRating={ratingFilter}
@@ -468,14 +469,14 @@ const Index = () => {
                 {loading ? (
                   <div className="glass-card p-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-muted-foreground">?�ビ?�ー?�取得中...</p>
+                    <p className="text-muted-foreground">レビューを取得中...</p>
                   </div>
                 ) : filteredReviews.length > 0 ? (
                   filteredReviews.map(review => <ReviewCard key={review.id} review={review} store={store} />)
                 ) : (
                   <div className="glass-card p-12 text-center">
                     <p className="text-muted-foreground">
-                      {reviews.length === 0 ? '?�プ?�を検索?�て?�ビ?�ー?�確認し?�く?�さ?��? : '該当?�件??��?�ュ?�が?�り?�せ?��?}
+                      {reviews.length === 0 ? 'アプリを検索してレビューを確認してください。' : '該当条件のレビューがありません。'}
                     </p>
                   </div>
                 )}
@@ -490,9 +491,9 @@ const Index = () => {
                     className="flex items-center gap-2 px-6 py-3 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium disabled:opacity-50"
                   >
                     {loadingMore ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> �?��込み�?..</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> 読み込み中...</>
                     ) : (
-                      <><ChevronDown className="w-4 h-4" /> ?�ビ?�ー?�も?�と見る</>
+                      <><ChevronDown className="w-4 h-4" /> レビューをもっと見る</>
                     )}
                   </button>
                 </div>
