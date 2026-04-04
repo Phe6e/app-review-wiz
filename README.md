@@ -20,8 +20,9 @@
 4. Drag & drop your image into the text box — GitHub will generate a URL like: https://github.com/user-attachments/assets/...
 5. Copy that URL and paste it here:
 
-![App Screenshot](https://github.com/user-attachments/assets/dd879606-459c-408e-ab12-0634763d7332)
+![App Screenshot]()
 -->
+https://github.com/user-attachments/assets/dd879606-459c-408e-ab12-0634763d7332
 
 ## Tech Stack
 
