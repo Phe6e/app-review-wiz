@@ -4,43 +4,48 @@ const corsHeaders = {
 };
 
 async function analyzeBatch(batch: any[], apiKey: string): Promise<any[]> {
-  const reviewTexts = batch.map((r: any, i: number) => `[${i}] (${r.rating}★) ${r.title}: ${r.content}`).join('\n');
+  const reviewTexts = batch.map((r: any, i: number) => `[${i}] (${r.rating}点) ${r.title}: ${r.content}`).join('\n');
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash-lite',
-      messages: [
+      contents: [
         {
-          role: 'system',
-          content: `You are a sentiment analysis engine for app reviews. For each review, determine:
+          parts: [
+            {
+              text: `You are a sentiment analysis engine for app reviews. For each review, determine:
 1. sentiment: "positive", "negative", or "neutral"
-2. keywords: array of 1-3 key topics mentioned
-3. aiSummary: a concise 2-4 word summary in Korean in [state + subject] format (e.g. "불안정한 결제", "신속한 로딩", "빈번한 크래시", "편리한 UI")
+2. keywords: array of 1-3 key topics mentioned in Japanese
+3. aiSummary: a concise 2-4 word summary in Japanese in [state + subject] format (e.g. "不安定な決済", "遅い読込", "頻繁なクラッシュ", "使いやすいUI")
 
 Return ONLY valid JSON array like:
-[{"index": 0, "sentiment": "positive", "keywords": ["디자인", "UI"], "aiSummary": "편리한 UI"}, ...]
+[{"index": 0, "sentiment": "positive", "keywords": ["デザイン", "UI"], "aiSummary": "使いやすいUI"}, ...]
 
-No explanation, just JSON.`
-        },
-        { role: 'user', content: reviewTexts }
+No explanation, just JSON.
+
+Reviews:
+${reviewTexts}`
+            }
+          ]
+        }
       ],
-      temperature: 0.1,
+      generationConfig: {
+        temperature: 0.1,
+      }
     }),
   });
 
   if (!response.ok) {
     const errorData = await response.text();
-    console.error('AI API error:', errorData);
-    throw new Error(`AI API returned ${response.status}`);
+    console.error('Gemini API error:', errorData);
+    throw new Error(`Gemini API returned ${response.status}`);
   }
 
   const aiData = await response.json();
-  const content = aiData.choices?.[0]?.message?.content || '[]';
+  const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
 
   let parsed;
   try {
@@ -77,23 +82,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ success: false, error: 'AI API key not configured' }),
+        JSON.stringify({ success: false, error: 'GEMINI_API_KEY not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Process ALL reviews in batches of 20
-    const BATCH_SIZE = 20;
-    const allAnalyzed: any[] = [];
-
-    for (let i = 0; i < reviews.length; i += BATCH_SIZE) {
-      const batch = reviews.slice(i, i + BATCH_SIZE);
-      const analyzed = await analyzeBatch(batch, apiKey);
-      allAnalyzed.push(...analyzed);
-    }
+    // Limit to first 20 reviews to avoid timeout
+    const limitedReviews = reviews.slice(0, 20);
+    const allAnalyzed = await analyzeBatch(limitedReviews, apiKey);
 
     // Extract all keywords with frequency
     const keywordMap: Record<string, { count: number; sentiment: string }> = {};
