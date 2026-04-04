@@ -2,10 +2,10 @@
 
 ## Demo
 
-| 버전 | 링크 |
-|------|------|
-| 🇰🇷 한국어 | https://app-review-fr3ptj0aa-phe6es-projects.vercel.app/ |
-| 🇯🇵 일본어 | https://app-review-2ur1q46j1-phe6es-projects.vercel.app/ |
+| Version | Link |
+|---------|------|
+| 🇰🇷 Korean | https://app-review-fr3ptj0aa-phe6es-projects.vercel.app/ |
+| 🇯🇵 Japanese | https://app-review-2ur1q46j1-phe6es-projects.vercel.app/ |
 
 ---
 
