@@ -21,7 +21,7 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
     return { backgroundColor: `${c}26`, color: c };
   };
 
-  const sentimentLabels = { positive: '긍정', negative: '부정', neutral: '중립' };
+  const sentimentLabels = { positive: 'ポジティブ', negative: 'ネガティブ', neutral: 'ニュートラル' };
 
   const isChurn = review.isChurnWarning;
 
@@ -40,7 +40,7 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
           style={{ backgroundColor: `${colors.negative}14` }}>
           <AlertTriangle className="w-4 h-4" style={{ color: colors.negative }} />
           <span className="text-xs font-semibold" style={{ color: colors.negative }}>
-            ⚠️ 이탈 주의 유저
+            ⚠️ 離脱注意ユーザー
           </span>
         </div>
       )}
@@ -102,7 +102,7 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
           >
-            {expanded ? <><ChevronUp className="w-3 h-3" /> 접기</> : <><ChevronDown className="w-3 h-3" /> 더 보기</>}
+            {expanded ? <><ChevronUp className="w-3 h-3" /> 閉じる</> : <><ChevronDown className="w-3 h-3" /> もっと見る</>}
           </button>
         )}
       </div>

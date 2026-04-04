@@ -14,10 +14,10 @@ interface DateRangePickerProps {
 }
 
 const presets = [
-  { label: '최근 7일', days: 7 },
-  { label: '최근 30일', days: 30 },
-  { label: '최근 90일', days: 90 },
-  { label: '전체', days: 0 },
+  { label: '直近7日', days: 7 },
+  { label: '直近30日', days: 30 },
+  { label: '直近90日', days: 90 },
+  { label: 'すべて', days: 0 },
 ];
 
 const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChange }: DateRangePickerProps) => {
@@ -39,7 +39,7 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
 
   return (
     <div className="glass-card p-4 flex flex-wrap items-center gap-3">
-      <span className="text-sm font-display font-semibold text-foreground">📅 날짜 범위</span>
+      <span className="text-sm font-display font-semibold text-foreground">📅 期間</span>
 
       <div className="flex items-center gap-2">
         {presets.map(p => (
@@ -60,7 +60,7 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className={cn('w-[140px] justify-start text-left text-xs h-8', !startDate && 'text-muted-foreground')}>
               <CalendarIcon className="mr-1 h-3.5 w-3.5" />
-              {startDate ? format(startDate, 'yyyy-MM-dd') : '시작일'}
+              {startDate ? format(startDate, 'yyyy-MM-dd') : '開始日'}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -80,7 +80,7 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className={cn('w-[140px] justify-start text-left text-xs h-8', !endDate && 'text-muted-foreground')}>
               <CalendarIcon className="mr-1 h-3.5 w-3.5" />
-              {endDate ? format(endDate, 'yyyy-MM-dd') : '종료일'}
+              {endDate ? format(endDate, 'yyyy-MM-dd') : '終了日'}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">

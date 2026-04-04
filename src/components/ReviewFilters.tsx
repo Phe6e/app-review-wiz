@@ -14,9 +14,9 @@ const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSe
   const colors = getStoreColors(store);
   const ratings = [5, 4, 3, 2, 1];
   const sentiments: { value: Sentiment; label: string }[] = [
-    { value: 'positive', label: '긍정' },
-    { value: 'negative', label: '부정' },
-    { value: 'neutral', label: '중립' },
+    { value: 'positive', label: 'ポジティブ' },
+    { value: 'negative', label: 'ネガティブ' },
+    { value: 'neutral', label: 'ニュートラル' },
   ];
 
   const getColor = (s: Sentiment) => {
@@ -28,7 +28,7 @@ const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSe
   return (
     <div className="flex flex-wrap gap-4 items-center">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium">평점:</span>
+        <span className="text-sm text-muted-foreground font-medium">評価:</span>
         <div className="flex gap-1.5">
           {ratings.map(r => (
             <button
@@ -49,7 +49,7 @@ const ReviewFilters = ({ selectedRating, selectedSentiment, onRatingChange, onSe
       <div className="w-px h-6 bg-border" />
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium">감성:</span>
+        <span className="text-sm text-muted-foreground font-medium">感情:</span>
         <div className="flex gap-1.5">
           {sentiments.map(s => {
             const c = getColor(s.value);

@@ -8,8 +8,8 @@ interface StoreSelectorProps {
 
 const StoreSelector = ({ selected, onSelect }: StoreSelectorProps) => {
   const handleGoogleClick = () => {
-    toast.info('Google Play 분석은 준비 중입니다.', {
-      description: 'API 연동이 완료되면 사용할 수 있습니다. App Store를 이용해주세요.',
+    toast.info('Google Play分析は準備中です。', {
+      description: 'API連携が完了したらご利用いただけます。App Storeをご利用ください。',
     });
   };
 

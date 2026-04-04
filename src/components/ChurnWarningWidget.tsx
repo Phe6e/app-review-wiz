@@ -22,8 +22,8 @@ const ChurnWarningWidget = ({ users, store, onClickUser }: Props) => {
           <AlertTriangle className="w-4.5 h-4.5" style={{ color: colors.negative }} />
         </div>
         <div>
-          <h3 className="font-display font-semibold text-foreground text-sm">이탈 위험 충성 고객</h3>
-          <p className="text-xs text-muted-foreground">최근 평점 급락 유저 Top {users.length}</p>
+          <h3 className="font-display font-semibold text-foreground text-sm">離脱リスク常連顧客</h3>
+          <p className="text-xs text-muted-foreground">最近の評価急落ユーザー Top {users.length}</p>
         </div>
       </div>
       <div className="space-y-2">
