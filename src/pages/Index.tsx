@@ -178,41 +178,40 @@ const Index = () => {
         setCurrentPage(nextPage);
         setHasNextPage(result.hasNextPage || false);
 
-        const mergedReviewsPromise = new Promise<ReviewResult[]>((resolve) => {
-          setReviews(prev => {
-            const allReviews = [...prev, ...newReviews];
-            resolve(allReviews);
-            return allReviews;
-          });
-        });
+        setReviews(prev => [...prev, ...newReviews]);
 
         requestAnimationFrame(() => {
           window.scrollTo(0, scrollY);
         });
 
-        const allReviews = await mergedReviewsPromise;
         setAnalyzing(true);
         try {
-          const analysis = await analyzeReviews(allReviews);
+          // Only analyze new reviews (existing ones already have badges)
+          const analysis = await analyzeReviews(newReviews);
           if (analysis.success) {
             setReviews(prev => {
               const sentimentMap = new Map<string, ReviewResult>();
               for (const r of analysis.reviews) {
                 sentimentMap.set(r.id, r);
               }
-              return prev.map(r => sentimentMap.get(r.id) || r);
+              // Merge: new reviews get badges, existing ones keep theirs
+              const merged = prev.map(r => sentimentMap.get(r.id) || r);
+
+              // Recompute sentiment distribution from all reviews
+              const c = getStoreColors(store);
+              const pos = merged.filter(r => r.sentiment === 'positive').length;
+              const neg = merged.filter(r => r.sentiment === 'negative').length;
+              const neu = merged.filter(r => r.sentiment === 'neutral').length;
+              setSentimentDist([
+                { name: '긍정', value: pos, color: c.positive },
+                { name: '부정', value: neg, color: c.negative },
+                { name: '중립', value: neu, color: c.neutral },
+              ]);
+
+              return merged;
             });
             if (analysis.keywords?.length > 0) {
               setKeywords(analysis.keywords);
-            }
-            if (analysis.sentimentDistribution) {
-              const sd = analysis.sentimentDistribution;
-              const c = getStoreColors(store);
-              setSentimentDist([
-                { name: '긍정', value: sd.positive || 0, color: c.positive },
-                { name: '부정', value: sd.negative || 0, color: c.negative },
-                { name: '중립', value: sd.neutral || 0, color: c.neutral },
-              ]);
             }
           }
         } catch (err) {
