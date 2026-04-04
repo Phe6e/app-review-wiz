@@ -52,5 +52,5 @@ export async function fetchReviews(appId: string, store: Store, country = 'kr', 
 }
 
 export async function analyzeReviews(reviews: ReviewResult[]) {
-  return callEdgeFunction('analyze-reviews', { reviews });
+  return callEdgeFunction('analyze-reviews', { reviews, language: 'ja' });
 }
