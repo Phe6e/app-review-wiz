@@ -5,7 +5,7 @@
 | Version | Link |
 |---------|------|
 | 🇰🇷 Korean | app-review-wiz.lovable.app |
-| 🇯🇵 Japanese | --https://app-review-2ur1q46j1-phe6es-projects.vercel.app/ | --modifying
+| 🇯🇵 Japanese | --modifying |
 
 ---
 
