@@ -60,7 +60,7 @@ const ReviewCard = ({ review, store = 'apple' }: { review: ReviewResult; store?:
           </div>
           <div className="flex items-center gap-3">
             <StarRating rating={review.rating} />
-            <span className="text-xs text-muted-foreground">{review.date}</span>
+            <span className="text-xs text-muted-foreground">{review.date?.slice(0, 10)}</span>
             {review.version && (
               <span className="text-xs px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground">
                 v{review.version}
