@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ interface DateRangePickerProps {
   endDate: Date | undefined;
   onStartDateChange: (date: Date | undefined) => void;
   onEndDateChange: (date: Date | undefined) => void;
+  /** Optional note about the date span of the loaded data */
+  dataInfo?: ReactNode;
 }
 
 const presets = [
@@ -20,7 +22,7 @@ const presets = [
   { label: 'すべて', days: 0 },
 ];
 
-const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChange }: DateRangePickerProps) => {
+const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChange, dataInfo }: DateRangePickerProps) => {
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
 
@@ -94,6 +96,8 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
           </PopoverContent>
         </Popover>
       </div>
+
+      {dataInfo && <div className="w-full">{dataInfo}</div>}
     </div>
   );
 };

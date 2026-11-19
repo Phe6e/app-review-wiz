@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { Star, MessageSquare, TrendingUp, BarChart3, Loader2, ChevronDown } from 'lucide-react';
+import { format } from 'date-fns';
+import { Star, MessageSquare, TrendingUp, BarChart3, Loader2, ChevronDown, RefreshCw } from 'lucide-react';
 import StoreSelector from '@/components/StoreSelector';
 import AppSearchBar from '@/components/AppSearchBar';
 import ReviewCard from '@/components/ReviewCard';
@@ -16,9 +17,17 @@ import CompetitorComparison from '@/components/CompetitorComparison';
 import ChurnWarningWidget from '@/components/ChurnWarningWidget';
 import VersionComparisonBar from '@/components/VersionComparisonBar';
 import { Store, AppResult, ReviewResult, fetchReviews, analyzeReviews } from '@/lib/api';
-import { Sentiment, mockReviews, mockKeywords, sentimentData, ratingDistribution } from '@/data/mockData';
+import { Sentiment } from '@/data/mockData';
 import { getStoreColors } from '@/lib/storeColors';
 import { detectChurnWarnings, ChurnWarningUser } from '@/lib/churnDetection';
+
+const EMPTY_RATING_DIST = [5, 4, 3, 2, 1].map(rating => ({ rating, count: 0 }));
+const EMPTY_SENTIMENT_DIST = [
+  { name: 'ポジティブ', value: 0, color: '' },
+  { name: 'ネガティブ', value: 0, color: '' },
+  { name: 'ニュートラル', value: 0, color: '' },
+];
+const EMPTY_VALUE = '–';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -28,12 +37,14 @@ const Index = () => {
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [sentimentFilter, setSentimentFilter] = useState<Sentiment | null>(null);
   const [reviews, setReviews] = useState<ReviewResult[]>([]);
-  const [keywords, setKeywords] = useState(mockKeywords);
-  const [sentimentDist, setSentimentDist] = useState(sentimentData);
-  const [ratingDist, setRatingDist] = useState(ratingDistribution);
+  const [keywords, setKeywords] = useState<{ text: string; weight: number }[]>([]);
+  const [sentimentDist, setSentimentDist] = useState(EMPTY_SENTIMENT_DIST);
+  const [ratingDist, setRatingDist] = useState(EMPTY_RATING_DIST);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [isUsingMockData, setIsUsingMockData] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
+  const [emptyMessage, setEmptyMessage] = useState<string | null>(null);
+  const [lastCollectedAt, setLastCollectedAt] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -85,16 +96,22 @@ const Index = () => {
   const handleSelectApp = useCallback(async (app: AppResult) => {
     setSelectedApp(app);
     setLoading(true);
-    setIsUsingMockData(false);
+    setFetchFailed(false);
+    setEmptyMessage(null);
+    setLastCollectedAt(null);
     setCurrentPage(1);
     setHasNextPage(false);
     setReviews([]);
     setDateStart(undefined);
     setDateEnd(undefined);
     setBackgroundVersionReviews([]);
+    setRatingDist(EMPTY_RATING_DIST);
+    setSentimentDist(EMPTY_SENTIMENT_DIST);
+    setKeywords([]);
 
     try {
-      const result = await fetchReviews(app.id, store, country, 1);
+      const result = await fetchReviews(app.id, store, country, 1, app.name);
+      setLastCollectedAt(result.lastCollectedAt ?? null);
 
       if (result.success && result.reviews && result.reviews.length > 0) {
         let allReviews: ReviewResult[] = result.reviews;
@@ -144,16 +161,12 @@ const Index = () => {
 
         await analyzeAndUpdate(allReviews);
       } else {
-        setIsUsingMockData(true);
-        setReviews(mockReviews as unknown as ReviewResult[]);
-        setRatingDist(ratingDistribution);
-        setSentimentDist(sentimentData);
-        setKeywords(mockKeywords);
+        setFetchFailed(true);
+        setEmptyMessage(result.message ?? null);
       }
     } catch (e) {
       console.error('Fetch error:', e);
-      setIsUsingMockData(true);
-      setReviews(mockReviews as unknown as ReviewResult[]);
+      setFetchFailed(true);
     } finally {
       setLoading(false);
     }
@@ -251,9 +264,31 @@ const Index = () => {
   }, [dateFilteredReviews, ratingFilter, sentimentFilter]);
 
   const avgRating = useMemo(() => {
-    if (dateFilteredReviews.length === 0) return selectedApp?.rating || 0;
+    if (dateFilteredReviews.length === 0) return 0;
     return Math.round((dateFilteredReviews.reduce((s, r) => s + r.rating, 0) / dateFilteredReviews.length) * 10) / 10;
-  }, [dateFilteredReviews, selectedApp]);
+  }, [dateFilteredReviews]);
+
+  // Date span of the loaded data (independent of the selected date range)
+  const dataSpan = useMemo(() => {
+    if (reviews.length === 0) return null;
+    let newest = reviews[0].date;
+    let oldest = reviews[0].date;
+    let newestTime = new Date(newest).getTime();
+    let oldestTime = newestTime;
+    for (const r of reviews) {
+      const t = new Date(r.date).getTime();
+      if (Number.isNaN(t)) continue;
+      if (t > newestTime) { newestTime = t; newest = r.date; }
+      if (t < oldestTime) { oldestTime = t; oldest = r.date; }
+    }
+    return {
+      newest: newest.slice(0, 10),
+      oldest: oldest.slice(0, 10),
+      shorterThanRange: !!dateStart && oldestTime > dateStart.getTime(),
+    };
+  }, [reviews, dateStart]);
+
+  const hasStats = dateFilteredReviews.length > 0;
 
   const ratingTrend = useMemo(() => {
     if (dateFilteredReviews.length === 0) return { change: 0, direction: 'neutral' as const };
@@ -347,13 +382,13 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mt-0.5">アプリのレビューを検索して分析する</p>
             </div>
             <div className="sm:hidden shrink-0">
-              <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+              <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setFetchFailed(false); }} />
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <StoreSelector selected={store} onSelect={s => { setStore(s); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+            <StoreSelector selected={store} onSelect={s => { setStore(s); setSelectedApp(null); setReviews([]); setFetchFailed(false); }} />
             <div className="hidden sm:block">
-              <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setIsUsingMockData(true); }} />
+              <CountrySelector selected={country} onSelect={c => { setCountry(c); setSelectedApp(null); setReviews([]); setFetchFailed(false); }} />
             </div>
           </div>
         </div>
@@ -388,7 +423,6 @@ const Index = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-neutral font-display font-semibold">⭐ {selectedApp.rating}</span>
                     <span className="text-muted-foreground text-sm">· {selectedApp.reviewCount?.toLocaleString()} レビュー</span>
-                    {isUsingMockData && <span className="text-xs px-2 py-0.5 rounded-full bg-neutral/15 text-neutral">デモデータ</span>}
                   </div>
                 </div>
                 {(loading || analyzing) && (
@@ -406,22 +440,29 @@ const Index = () => {
                 endDate={dateEnd}
                 onStartDateChange={setDateStart}
                 onEndDateChange={setDateEnd}
+                dataInfo={dataSpan && (
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <p>最新のレビュー: {dataSpan.newest} · 最も古いレビュー: {dataSpan.oldest}</p>
+                    {lastCollectedAt && <p>最終取得: {format(new Date(lastCollectedAt), 'yyyy-MM-dd HH:mm')}</p>}
+                    {dataSpan.shorterThanRange && <p>Appleが提供する最新500件と、それ以降に取得したレビューのみ表示しています</p>}
+                  </div>
+                )}
               />
             </section>
 
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="総レビュー数" value={dateFilteredReviews.length > 0 ? dateFilteredReviews.length.toLocaleString() : selectedApp?.reviewCount?.toLocaleString() || '0'} />
-              <StatCard icon={<Star className="w-5 h-5" />} label="平均評価" value={String(avgRating)} />
+              <StatCard icon={<MessageSquare className="w-5 h-5" />} label="総レビュー数" value={hasStats ? dateFilteredReviews.length.toLocaleString() : EMPTY_VALUE} />
+              <StatCard icon={<Star className="w-5 h-5" />} label="平均評価" value={hasStats ? String(avgRating) : EMPTY_VALUE} />
               <StatCard
                 icon={<TrendingUp className="w-5 h-5" />}
                 label="評価変動推移"
-                value={`${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%`}
-                subtext={ratingTrend.direction === 'up' ? '▲ 先月比上昇' : ratingTrend.direction === 'down' ? '▼ 先月比下落' : '— 変動なし'}
+                value={hasStats ? `${ratingTrend.change >= 0 ? '+' : ''}${ratingTrend.change}%` : EMPTY_VALUE}
+                subtext={!hasStats ? undefined : ratingTrend.direction === 'up' ? '▲ 先月比上昇' : ratingTrend.direction === 'down' ? '▼ 先月比下落' : '— 変動なし'}
               />
               <StatCard
                 icon={<BarChart3 className="w-5 h-5" />}
                 label="レビュー密度"
-                value={`${reviewDensity}`}
+                value={hasStats ? `${reviewDensity}` : EMPTY_VALUE}
                 subtext="直近7日の日次平均"
               />
             </section>
@@ -470,6 +511,21 @@ const Index = () => {
                     <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
                     <p className="text-muted-foreground">レビューを取得中...</p>
                   </div>
+                ) : selectedApp && fetchFailed && reviews.length === 0 ? (
+                  <div className="glass-card p-12 text-center space-y-4">
+                    <p className="text-muted-foreground">
+                      {emptyMessage ?? <>現在、Appleからレビューを取得できませんでした。<br />Appleのフィードが一時的に空になっている可能性があります。</>}
+                    </p>
+                    {!emptyMessage && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectApp(selectedApp)}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass-card hover:border-primary/50 transition-all duration-300 text-foreground font-display font-medium"
+                      >
+                        <RefreshCw className="w-4 h-4" /> 再試行
+                      </button>
+                    )}
+                  </div>
                 ) : filteredReviews.length > 0 ? (
                   filteredReviews.map(review => <ReviewCard key={review.id} review={review} store={store} />)
                 ) : (
@@ -481,7 +537,7 @@ const Index = () => {
                 )}
               </div>
 
-              {hasNextPage && !isUsingMockData && (
+              {hasNextPage && (
                 <div className="flex justify-center mt-6">
                   <button
                     type="button"

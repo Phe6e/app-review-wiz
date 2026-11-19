@@ -52,7 +52,7 @@
 - **Competitor Comparison** — Side-by-side comparison tab for analyzing multiple apps
 - **Bilingual UI** — Korean (`main` branch) and Japanese (`japanese` branch) language support
 - **Store Color Themes** — Distinct color schemes for App Store vs Google Play
-- **Mock Data Fallback** — Falls back to sample data when the API is unavailable
+- **Review Store** — Reviews are collected from the App Store RSS feed every 15 minutes into Supabase and served from there, so they stay available while Apple's feed is temporarily empty
 
 ---
 
